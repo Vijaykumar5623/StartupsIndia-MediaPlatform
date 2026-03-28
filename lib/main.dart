@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'features/splash/presentation/pages/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,16 +17,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: true,
+      debugShowCheckedModeBanner: false,
       title: 'Startups India Media Platform',
-      home: Scaffold(
-        body: Center(
-          child: Text(
-            'Welcome to Startups India Media Platform!',
-            style: TextStyle(fontSize: 24),
-          ),
-        ),
-      )
+      home: const SplashScreen(),
     );
   }
 }
