@@ -80,8 +80,8 @@ class _SelectCountryScreenState extends State<SelectCountryScreen> {
   void _onNextPressed() {
     if (_selectedCountry == null) return;
     
-    // Clear back stack and go to home
-    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    // Continue to topics configuration
+    Navigator.pushNamed(context, '/topics');
   }
 
   @override
