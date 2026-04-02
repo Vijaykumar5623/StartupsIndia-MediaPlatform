@@ -14,7 +14,9 @@ import 'features/auth/presentation/screens/fill_profile_screen.dart';
 import 'features/onboarding/presentation/screens/select_country_screen.dart';
 import 'features/onboarding/presentation/screens/choose_topics_screen.dart';
 import 'features/onboarding/presentation/screens/choose_news_sources_screen.dart';
-import 'features/home/presentation/screens/home_screen.dart';
+import 'features/home/presentation/screens/main_app_scaffold.dart';
+import 'features/home/presentation/screens/trending_screen.dart';
+import 'features/home/presentation/screens/notifications_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,7 +59,10 @@ class MyApp extends StatelessWidget {
         '/news-sources': (context) => const ChooseNewsSourcesScreen(),
         '/fill-profile': (context) => const FillProfileScreen(),
         '/select-country': (context) => const SelectCountryScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const MainAppScaffold(initialIndex: 0),
+        '/explore': (context) => const MainAppScaffold(initialIndex: 1),
+        '/trending': (context) => const TrendingScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
       },
     );
   }

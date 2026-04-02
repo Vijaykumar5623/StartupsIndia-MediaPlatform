@@ -10,7 +10,9 @@ import '../widgets/news_tile.dart';
 import '../widgets/trending_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  final bool showBottomNav;
+
+  const HomeScreen({super.key, this.showBottomNav = true});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -34,7 +36,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       backgroundColor: AppColors.grayscaleWhite,
 
       // ── Bottom Navigation Bar ───────────────────────────────────────
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: widget.showBottomNav ? _buildBottomNav() : null,
 
       body: SafeArea(
         child: CustomScrollView(
@@ -47,7 +49,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             SliverToBoxAdapter(child: _buildSearchBar()),
 
             // ── Trending Section ──────────────────────────────────────
-            SliverToBoxAdapter(child: _buildSectionHeader('Trending')),
+            SliverToBoxAdapter(
+              child: _buildSectionHeader(
+                'Trending',
+                onSeeAllTap: () => Navigator.pushNamed(context, '/trending'),
+              ),
+            ),
             SliverToBoxAdapter(
               child: TrendingCard(article: NewsFeedData.trendingArticle),
             ),
@@ -191,35 +198,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const Spacer(),
           // Notification bell
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.grayscaleInputBackground,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.notifications_none_rounded,
-                  color: AppColors.grayscaleTitleActive,
-                  size: 22,
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 9,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF4757),
-                    shape: BoxShape.circle,
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, '/notifications'),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.grayscaleInputBackground,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.notifications_none_rounded,
+                    color: AppColors.grayscaleTitleActive,
+                    size: 22,
                   ),
                 ),
-              ),
-            ],
+                Positioned(
+                  top: 8,
+                  right: 9,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFF4757),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -295,7 +305,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // ── Section Header ────────────────────────────────────────────────────
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, {VoidCallback? onSeeAllTap}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
       child: Row(
@@ -309,7 +319,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () {},
+            onTap: onSeeAllTap,
             child: Text(
               'See all',
               style: AppTypography.textSmall.copyWith(
@@ -341,7 +351,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       child: BottomNavigationBar(
         currentIndex: _navIndex,
-        onTap: (index) => setState(() => _navIndex = index),
+        onTap: (index) {
+          if (index == 1) {
+            Navigator.pushNamed(context, '/explore');
+            return;
+          }
+          setState(() => _navIndex = index);
+        },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.transparent,
         elevation: 0,
