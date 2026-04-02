@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/models/news_article.dart';
 import '../../../../theme/style_guide.dart';
 
@@ -7,11 +8,13 @@ import '../../../../theme/style_guide.dart';
 class TrendingCard extends StatelessWidget {
   final NewsArticle article;
   final VoidCallback? onTap;
+  final double horizontalPadding;
 
   const TrendingCard({
     super.key,
     required this.article,
     this.onTap,
+    this.horizontalPadding = 24,
   });
 
   @override
@@ -19,7 +22,7 @@ class TrendingCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: SizedBox(
@@ -28,17 +31,18 @@ class TrendingCard extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 // ── Hero Image ─────────────────────────────────────
-                Image.asset(
-                  article.thumbnailAsset,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.grayscaleSecondaryButton,
-                    child: const Center(
-                      child: Icon(Icons.image_not_supported_outlined,
-                          size: 48, color: AppColors.grayscaleButtonText),
-                    ),
-                  ),
-                ),
+                article.thumbnailAsset.startsWith('http')
+                    ? CachedNetworkImage(
+                        imageUrl: article.thumbnailAsset,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => _buildImageFallback(),
+                        errorWidget: (_, __, ___) => _buildImageFallback(),
+                      )
+                    : Image.asset(
+                        article.thumbnailAsset,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildImageFallback(),
+                      ),
 
                 // ── Gradient overlay ────────────────────────────────
                 Positioned.fill(
@@ -154,6 +158,27 @@ class TrendingCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageFallback() {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.grayscaleSecondaryButton,
+      ),
+      child: Center(
+        child: CachedNetworkImage(
+          imageUrl: 'https://placehold.co/96x96/e5e7eb/9ca3af.png?text=Image',
+          width: 56,
+          height: 56,
+          fit: BoxFit.cover,
+          errorWidget: (_, __, ___) => const Icon(
+            Icons.image_not_supported_outlined,
+            size: 40,
+            color: AppColors.grayscaleButtonText,
           ),
         ),
       ),
