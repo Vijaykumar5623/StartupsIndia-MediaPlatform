@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../models/user_model.dart';
 
 /// Abstract contract for authentication operations.
 /// The UI layer depends on this, not on [FirebaseAuthRepositoryImpl].
@@ -30,4 +31,18 @@ abstract class AuthRepository {
 
   /// Sign out from Firebase (and Google if applicable).
   Future<void> signOut();
+
+  /// Returns the active user data for profile UI.
+  Future<UserModel?> getCurrentUserModel();
+
+  /// Updates user profile fields from edit-profile form.
+  Future<void> updateUserData({
+    required String username,
+    required String fullName,
+    required String email,
+    required String phone,
+    required String bio,
+    required String website,
+    String? avatarPath,
+  });
 }
