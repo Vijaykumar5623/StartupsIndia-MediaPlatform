@@ -41,4 +41,22 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF111217),
+      primaryColor: AppColors.primaryDefault,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primaryDefault,
+        surface: Color(0xFF111217),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF111217),
+        surfaceTintColor: Color(0xFF111217),
+      ),
+    );
+  }
 }
