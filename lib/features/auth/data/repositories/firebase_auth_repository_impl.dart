@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../domain/models/user_model.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 /// Concrete implementation of [AuthRepository] backed by Firebase Auth
@@ -9,10 +10,10 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
   FirebaseAuthRepositoryImpl({
     FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
-  })  : _auth = firebaseAuth ?? FirebaseAuth.instance,
-        // On Web, GoogleSignIn.instance is not pre-initialized (no clientId meta
-        // tag configured yet), so we fall back gracefully.
-        _googleSignIn = googleSignIn ?? (kIsWeb ? null : GoogleSignIn.instance);
+  }) : _auth = firebaseAuth ?? FirebaseAuth.instance,
+       // On Web, GoogleSignIn.instance is not pre-initialized (no clientId meta
+       // tag configured yet), so we fall back gracefully.
+       _googleSignIn = googleSignIn ?? (kIsWeb ? null : GoogleSignIn.instance);
 
   final FirebaseAuth _auth;
   final GoogleSignIn? _googleSignIn; // nullable — null on Web until configured
@@ -92,5 +93,84 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
       _auth.signOut(),
       if (_googleSignIn != null) _googleSignIn.signOut(),
     ]);
+  }
+
+  @override
+  Future<UserModel?> getCurrentUserModel() async {
+    final user = _auth.currentUser;
+
+    if (user == null) {
+      return const UserModel(
+        uid: 'demo_user',
+        username: 'wilsonfranci',
+        fullName: 'Wilson Franci',
+        email: 'wilson@example.com',
+        phone: '+62-8421-4512-2531',
+        displayName: 'Wilson Franci',
+        bio:
+            'Lorem Ipsum is simply dummy text of the printing and typesetting industry.',
+        avatarUrl: 'assets/images/thumb_politics.png',
+        websiteUrl: 'https://example.com',
+        followersCount: 2156,
+        followingCount: 567,
+        newsCount: 23,
+      );
+    }
+
+    return UserModel(
+      uid: user.uid,
+      username: user.email?.split('@').first ?? 'newscreator',
+      fullName: (user.displayName == null || user.displayName!.trim().isEmpty)
+          ? 'News Creator'
+          : user.displayName!.trim(),
+      email: user.email ?? '',
+      phone: user.phoneNumber ?? '',
+      displayName:
+          (user.displayName == null || user.displayName!.trim().isEmpty)
+          ? 'News Creator'
+          : user.displayName!.trim(),
+      bio: 'Sharing updates and insights from around the world.',
+      avatarUrl: user.photoURL ?? 'assets/images/thumb_politics.png',
+      websiteUrl: 'https://example.com',
+      followersCount: 2156,
+      followingCount: 567,
+      newsCount: 23,
+    );
+  }
+
+  @override
+  Future<void> updateUserData({
+    required String username,
+    required String fullName,
+    required String email,
+    required String phone,
+    required String bio,
+    required String website,
+    String? avatarPath,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      return;
+    }
+
+    await user.updateDisplayName(fullName.trim());
+
+    if (email.trim().isNotEmpty && email.trim() != (user.email ?? '')) {
+      try {
+        await user.verifyBeforeUpdateEmail(email.trim());
+      } on FirebaseAuthException {
+        // Ignore for now if recent login is required; UI remains responsive.
+      }
+    }
+
+    // Placeholder: persist extra fields (username/phone/bio/website/avatarPath)
+    // in Firestore profile document when backend schema is finalized.
+    final _ = <String, String?>{
+      'username': username.trim(),
+      'phone': phone.trim(),
+      'bio': bio.trim(),
+      'website': website.trim(),
+      'avatarPath': avatarPath,
+    };
   }
 }

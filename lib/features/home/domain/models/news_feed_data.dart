@@ -6,6 +6,7 @@ import 'news_article.dart';
 class NewsFeedData {
   static const NewsArticle trendingArticle = NewsArticle(
     id: 'trending_001',
+    authorId: 'demo_user',
     category: 'Europe',
     headline: 'Russian warship: Moskva sinks in Black Sea',
     sourceName: 'BBC News',
@@ -17,8 +18,10 @@ class NewsFeedData {
   static const List<NewsArticle> latestArticles = [
     NewsArticle(
       id: 'latest_001',
+      authorId: 'demo_user',
       category: 'Sports',
-      headline: 'Champions League: City vs Real Madrid preview as Guardiola targets glory',
+      headline:
+          'Champions League: City vs Real Madrid preview as Guardiola targets glory',
       sourceName: 'ESPN',
       sourceLogoAsset: 'assets/images/thumb_sports.png',
       thumbnailAsset: 'assets/images/thumb_sports.png',
@@ -26,8 +29,10 @@ class NewsFeedData {
     ),
     NewsArticle(
       id: 'latest_002',
+      authorId: 'demo_user',
       category: 'Politics',
-      headline: 'G7 leaders agree record package of economic support for Ukraine',
+      headline:
+          'G7 leaders agree record package of economic support for Ukraine',
       sourceName: 'Reuters',
       sourceLogoAsset: 'assets/images/thumb_politics.png',
       thumbnailAsset: 'assets/images/thumb_politics.png',
@@ -35,8 +40,10 @@ class NewsFeedData {
     ),
     NewsArticle(
       id: 'latest_003',
+      authorId: 'external_001',
       category: 'Technology',
-      headline: 'Apple unveils M3 chip architecture with groundbreaking energy efficiency',
+      headline:
+          'Apple unveils M3 chip architecture with groundbreaking energy efficiency',
       sourceName: 'The Verge',
       sourceLogoAsset: 'assets/images/thumb_tech.png',
       thumbnailAsset: 'assets/images/thumb_tech.png',
@@ -44,8 +51,10 @@ class NewsFeedData {
     ),
     NewsArticle(
       id: 'latest_004',
+      authorId: 'external_002',
       category: 'Business',
-      headline: 'Global markets rally after Fed signals pause in interest rate hikes',
+      headline:
+          'Global markets rally after Fed signals pause in interest rate hikes',
       sourceName: 'Bloomberg',
       sourceLogoAsset: 'assets/images/thumb_business.png',
       thumbnailAsset: 'assets/images/thumb_business.png',
@@ -53,6 +62,7 @@ class NewsFeedData {
     ),
     NewsArticle(
       id: 'latest_005',
+      authorId: 'demo_user',
       category: 'Sports',
       headline: 'Djokovic wins record 24th Grand Slam title at Australian Open',
       sourceName: 'ESPN',
@@ -62,6 +72,7 @@ class NewsFeedData {
     ),
     NewsArticle(
       id: 'latest_006',
+      authorId: 'external_003',
       category: 'Technology',
       headline: 'OpenAI announces GPT-5 with multimodal reasoning capabilities',
       sourceName: 'TechCrunch',

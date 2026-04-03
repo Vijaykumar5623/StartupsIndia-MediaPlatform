@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/style_guide.dart';
-import '../../../explore/presentation/screens/search_screen.dart';
+import '../../../bookmark/presentation/screens/bookmark_screen.dart';
+import '../../../explore/presentation/screens/explore_screen.dart';
+import '../../../profile/presentation/screens/personal_profile_screen.dart';
+import '../../domain/models/news_article.dart';
 import 'home_screen.dart';
 
 class MainAppScaffold extends StatefulWidget {
   final int initialIndex;
+  final List<NewsArticle> bookmarkedArticles;
 
-  const MainAppScaffold({super.key, this.initialIndex = 0});
+  const MainAppScaffold({
+    super.key,
+    this.initialIndex = 0,
+    this.bookmarkedArticles = const <NewsArticle>[],
+  });
 
   @override
   State<MainAppScaffold> createState() => _MainAppScaffoldState();
@@ -27,11 +35,14 @@ class _MainAppScaffoldState extends State<MainAppScaffold> {
       backgroundColor: AppColors.grayscaleWhite,
       body: IndexedStack(
         index: _navIndex,
-        children: const [
-          HomeScreen(showBottomNav: false),
-          SearchScreen(showBottomNav: false),
-          _ComingSoonPage(title: 'Bookmark'),
-          _ComingSoonPage(title: 'Profile'),
+        children: [
+          const HomeScreen(showBottomNav: false),
+          const ExploreScreen(),
+          BookmarkScreen(
+            bookmarkedArticles: widget.bookmarkedArticles,
+            onGoHome: () => setState(() => _navIndex = 0),
+          ),
+          const PersonalProfileScreen(),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(),
@@ -85,24 +96,6 @@ class _MainAppScaffoldState extends State<MainAppScaffold> {
             label: 'Profile',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ComingSoonPage extends StatelessWidget {
-  final String title;
-
-  const _ComingSoonPage({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        '$title coming soon',
-        style: AppTypography.textMedium.copyWith(
-          color: AppColors.grayscaleBodyText,
-        ),
       ),
     );
   }

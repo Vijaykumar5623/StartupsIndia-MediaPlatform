@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/models/news_article.dart';
 import '../../../../theme/style_guide.dart';
+import '../screens/article_detail_screen.dart';
 
 /// Reusable tile for the 'Latest' news feed section.
 /// Matches the Figma design: thumbnail left, category/headline/source right.
@@ -8,16 +10,12 @@ class NewsTile extends StatelessWidget {
   final NewsArticle article;
   final VoidCallback? onTap;
 
-  const NewsTile({
-    super.key,
-    required this.article,
-    this.onTap,
-  });
+  const NewsTile({super.key, required this.article, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: onTap ?? () => _openDetail(context),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         child: Row(
@@ -26,19 +24,22 @@ class NewsTile extends StatelessWidget {
             // ── Thumbnail ────────────────────────────────────────────
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                article.thumbnailAsset,
-                width: 96,
-                height: 96,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 96,
-                  height: 96,
-                  color: AppColors.grayscaleSecondaryButton,
-                  child: const Icon(Icons.image_not_supported_outlined,
-                      color: AppColors.grayscaleButtonText),
-                ),
-              ),
+              child: article.thumbnailAsset.startsWith('http')
+                  ? CachedNetworkImage(
+                      imageUrl: article.thumbnailAsset,
+                      width: 96,
+                      height: 96,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => _thumbnailFallback(),
+                      errorWidget: (_, __, ___) => _thumbnailFallback(),
+                    )
+                  : Image.asset(
+                      article.thumbnailAsset,
+                      width: 96,
+                      height: 96,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _thumbnailFallback(),
+                    ),
             ),
 
             const SizedBox(width: 12),
@@ -79,19 +80,22 @@ class NewsTile extends StatelessWidget {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(3),
-                        child: Image.asset(
-                          article.sourceLogoAsset,
-                          width: 20,
-                          height: 20,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 20,
-                            height: 20,
-                            color: AppColors.grayscaleLine,
-                            child: const Icon(Icons.newspaper,
-                                size: 12, color: AppColors.grayscaleButtonText),
-                          ),
-                        ),
+                        child: article.sourceLogoAsset.startsWith('http')
+                            ? CachedNetworkImage(
+                                imageUrl: article.sourceLogoAsset,
+                                width: 20,
+                                height: 20,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => _logoFallback(),
+                                errorWidget: (_, __, ___) => _logoFallback(),
+                              )
+                            : Image.asset(
+                                article.sourceLogoAsset,
+                                width: 20,
+                                height: 20,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => _logoFallback(),
+                              ),
                       ),
                       const SizedBox(width: 6),
                       Flexible(
@@ -106,8 +110,11 @@ class NewsTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.access_time_rounded,
-                          size: 12, color: AppColors.grayscaleButtonText),
+                      const Icon(
+                        Icons.access_time_rounded,
+                        size: 12,
+                        color: AppColors.grayscaleButtonText,
+                      ),
                       const SizedBox(width: 3),
                       Text(
                         article.timeAgo,
@@ -123,6 +130,39 @@ class NewsTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _thumbnailFallback() {
+    return Container(
+      width: 96,
+      height: 96,
+      color: AppColors.grayscaleSecondaryButton,
+      child: const Icon(
+        Icons.image_not_supported_outlined,
+        color: AppColors.grayscaleButtonText,
+      ),
+    );
+  }
+
+  Widget _logoFallback() {
+    return Container(
+      width: 20,
+      height: 20,
+      color: AppColors.grayscaleLine,
+      child: const Icon(
+        Icons.newspaper,
+        size: 12,
+        color: AppColors.grayscaleButtonText,
+      ),
+    );
+  }
+
+  void _openDetail(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ArticleDetailScreen(article: article),
       ),
     );
   }

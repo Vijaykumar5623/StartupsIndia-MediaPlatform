@@ -5,13 +5,19 @@ import '../../../home/presentation/widgets/news_tile.dart';
 import '../../domain/models/mock_explore_data.dart';
 import '../widgets/topic_search_tile.dart';
 import '../widgets/author_tile.dart';
+import 'source_profile_screen.dart';
 
 enum SearchTab { news, topics, author }
 
 class SearchScreen extends StatefulWidget {
   final bool showBottomNav;
+  final SearchTab initialTab;
 
-  const SearchScreen({super.key, this.showBottomNav = true});
+  const SearchScreen({
+    super.key,
+    this.showBottomNav = true,
+    this.initialTab = SearchTab.news,
+  });
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -21,9 +27,15 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
-  SearchTab _currentTab = SearchTab.news;
+  late SearchTab _currentTab;
   final Set<String> _savedTopics = {'topic_1'};
   final Set<String> _followingAuthors = {'author_2'};
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTab = widget.initialTab;
+  }
 
   @override
   void dispose() {
@@ -193,8 +205,7 @@ class _SearchScreenState extends State<SearchScreen> {
               height: 2.5,
               width: double.infinity,
               decoration: BoxDecoration(
-                color:
-                    isActive ? AppColors.primaryDefault : Colors.transparent,
+                color: isActive ? AppColors.primaryDefault : Colors.transparent,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -246,6 +257,14 @@ class _SearchScreenState extends State<SearchScreen> {
         return AuthorTile(
           author: author,
           isFollowing: _followingAuthors.contains(author.id),
+          onTap: () {
+            final source = MockExploreData.sourceProfileForAuthor(author);
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SourceProfileScreen(source: source),
+              ),
+            );
+          },
           onToggleFollow: () {
             setState(() {
               if (_followingAuthors.contains(author.id)) {

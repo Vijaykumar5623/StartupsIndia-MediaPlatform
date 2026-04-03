@@ -1,5 +1,6 @@
 import '../../../home/domain/models/news_article.dart';
 import '../../../home/domain/models/news_feed_data.dart';
+import 'source_profile_model.dart';
 
 class TopicSearchItem {
   final String id;
@@ -76,4 +77,84 @@ class MockExploreData {
       avatarAsset: 'assets/images/thumb_business.png',
     ),
   ];
+
+  static final Map<String, SourceProfileModel>
+  sourceProfilesByAuthorId = <String, SourceProfileModel>{
+    'author_1': SourceProfileModel(
+      id: 'source_bbc',
+      name: 'BBC News',
+      avatarUrl: 'assets/icons/bbc.png',
+      bio:
+          'An operational business division of the British Broadcasting Corporation responsible for gathering and broadcasting news and current affairs.',
+      websiteUrl: 'https://www.bbc.com/news',
+      followersCount: 1200000,
+      followingCount: 124000,
+      newsCount: 326,
+      isFollowing: true,
+      newsArticles: <NewsArticle>[
+        NewsFeedData.trendingArticle,
+        ...NewsFeedData.latestArticles,
+      ],
+      recentArticles: <NewsArticle>[
+        ...NewsFeedData.latestArticles,
+        NewsFeedData.trendingArticle,
+      ],
+    ),
+    'author_2': SourceProfileModel(
+      id: 'source_reuters',
+      name: 'Reuters',
+      avatarUrl: 'assets/images/thumb_politics.png',
+      bio:
+          'Global reporting agency delivering fast and trusted coverage on politics, markets, and world affairs.',
+      websiteUrl: 'https://www.reuters.com',
+      followersCount: 860000,
+      followingCount: 54000,
+      newsCount: 192,
+      isFollowing: true,
+      newsArticles: <NewsArticle>[...NewsFeedData.latestArticles],
+      recentArticles: <NewsArticle>[
+        NewsFeedData.latestArticles[1],
+        NewsFeedData.latestArticles[3],
+        NewsFeedData.latestArticles[0],
+      ],
+    ),
+    'author_3': SourceProfileModel(
+      id: 'source_verge',
+      name: 'The Verge',
+      avatarUrl: 'assets/images/thumb_tech.png',
+      bio:
+          'Technology publication focused on the future of consumer tech, culture, and digital innovation.',
+      websiteUrl: 'https://www.theverge.com',
+      followersCount: 540000,
+      followingCount: 31000,
+      newsCount: 154,
+      isFollowing: false,
+      newsArticles: <NewsArticle>[
+        NewsFeedData.latestArticles[2],
+        NewsFeedData.latestArticles[5],
+        NewsFeedData.trendingArticle,
+      ],
+      recentArticles: <NewsArticle>[
+        NewsFeedData.latestArticles[5],
+        NewsFeedData.latestArticles[2],
+      ],
+    ),
+  };
+
+  static SourceProfileModel sourceProfileForAuthor(AuthorItem author) {
+    return sourceProfilesByAuthorId[author.id] ??
+        SourceProfileModel(
+          id: author.id,
+          name: author.name,
+          avatarUrl: author.avatarAsset,
+          bio: 'Coverage and updates from ${author.name}.',
+          websiteUrl: 'https://example.com',
+          followersCount: 100000,
+          followingCount: 1000,
+          newsCount: 20,
+          isFollowing: false,
+          newsArticles: <NewsArticle>[...news],
+          recentArticles: <NewsArticle>[...news],
+        );
+  }
 }
