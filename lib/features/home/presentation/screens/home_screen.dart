@@ -2,9 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/style_guide.dart';
+import '../../../../core/models/news_article_model.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/models/news_article.dart';
 import '../../domain/models/news_feed_data.dart';
+import '../providers/news_provider.dart';
 import '../widgets/category_selector.dart';
 import '../widgets/news_tile.dart';
 import '../widgets/trending_card.dart';
@@ -25,13 +27,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<NewsArticle> get _filteredArticles {
     if (_selectedCategory == 'All') return NewsFeedData.latestArticles;
     return NewsFeedData.latestArticles
-        .where((a) =>
-            a.category.toLowerCase() == _selectedCategory.toLowerCase())
+        .where(
+          (a) => a.category.toLowerCase() == _selectedCategory.toLowerCase(),
+        )
         .toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final latestNewsAsync = ref.watch(latestNewsProvider);
+    final trendingNewsAsync = ref.watch(trendingNewsProvider);
+
     return Scaffold(
       backgroundColor: AppColors.grayscaleWhite,
 
@@ -56,7 +62,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             SliverToBoxAdapter(
-              child: TrendingCard(article: NewsFeedData.trendingArticle),
+              child: trendingNewsAsync.when(
+                data: (items) {
+                  if (items.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      child: Text(
+                        'No trending articles yet.',
+                        style: AppTypography.textSmall.copyWith(
+                          color: AppColors.grayscaleBodyText,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return TrendingCard(article: _toNewsArticle(items.first));
+                },
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryDefault,
+                    ),
+                  ),
+                ),
+                error: (error, _) => Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  child: Text(
+                    'Failed to load trending: $error',
+                    style: AppTypography.textSmall.copyWith(color: Colors.red),
+                  ),
+                ),
+              ),
             ),
 
             // ── Category Selector ─────────────────────────────────────
@@ -75,8 +118,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // ── Latest Section Header ─────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -106,13 +151,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // Using SliverList.builder for efficient rendering.
             // To swap for Firebase: replace _filteredArticles with a
             // StreamBuilder wrapping a Firestore .snapshots() call.
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  if (_filteredArticles.isEmpty) {
+            SliverToBoxAdapter(
+              child: latestNewsAsync.when(
+                data: (items) {
+                  final mapped = items
+                      .map(_toNewsArticle)
+                      .toList(growable: false);
+                  final filtered = _selectedCategory == 'All'
+                      ? mapped
+                      : mapped
+                            .where(
+                              (a) =>
+                                  a.category.toLowerCase() ==
+                                  _selectedCategory.toLowerCase(),
+                            )
+                            .toList(growable: false);
+
+                  if (filtered.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 48, horizontal: 24),
+                        vertical: 48,
+                        horizontal: 24,
+                      ),
                       child: Center(
                         child: Text(
                           'No articles in this category yet.',
@@ -123,21 +183,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     );
                   }
-                  return Column(
-                    children: [
-                      NewsTile(article: _filteredArticles[index]),
-                      if (index < _filteredArticles.length - 1)
-                        const Divider(
-                          height: 1,
-                          indent: 24,
-                          endIndent: 24,
-                          color: AppColors.grayscaleLine,
-                        ),
-                    ],
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      return Column(
+                        children: [
+                          NewsTile(article: filtered[index]),
+                          if (index < filtered.length - 1)
+                            const Divider(
+                              height: 1,
+                              indent: 24,
+                              endIndent: 24,
+                              color: AppColors.grayscaleLine,
+                            ),
+                        ],
+                      );
+                    },
                   );
                 },
-                childCount:
-                    _filteredArticles.isEmpty ? 1 : _filteredArticles.length,
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 22),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryDefault,
+                    ),
+                  ),
+                ),
+                error: (error, _) => Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  child: Text(
+                    'Failed to load latest news: $error',
+                    style: AppTypography.textSmall.copyWith(color: Colors.red),
+                  ),
+                ),
               ),
             ),
 
@@ -237,13 +321,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _logoLine(double width) => Container(
-        width: width,
-        height: 2,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(2),
-        ),
-      );
+    width: width,
+    height: 2,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(2),
+    ),
+  );
 
   // ── Search Bar ────────────────────────────────────────────────────────
   Widget _buildSearchBar() {
@@ -261,8 +345,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Row(
                 children: [
                   const SizedBox(width: 12),
-                  const Icon(Icons.search_rounded,
-                      color: AppColors.grayscaleBodyText, size: 20),
+                  const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.grayscaleBodyText,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
@@ -367,9 +454,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           fontSize: 10,
           fontWeight: FontWeight.w600,
         ),
-        unselectedLabelStyle: AppTypography.textSmall.copyWith(
-          fontSize: 10,
-        ),
+        unselectedLabelStyle: AppTypography.textSmall.copyWith(fontSize: 10),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
@@ -413,8 +498,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.bug_report,
-                    color: Color(0xFFB38600), size: 16),
+                const Icon(
+                  Icons.bug_report,
+                  color: Color(0xFFB38600),
+                  size: 16,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'Debug Info',
@@ -439,7 +527,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   await authRepo.signOut();
                   if (context.mounted) {
                     Navigator.pushNamedAndRemoveUntil(
-                        context, '/login', (route) => false);
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
                   }
                 },
                 style: OutlinedButton.styleFrom(
@@ -447,7 +538,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   side: const BorderSide(color: AppColors.errorDark),
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6)),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                 ),
                 icon: const Icon(Icons.logout, size: 16),
                 label: Text(
@@ -466,31 +558,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _debugRow(String label, String value) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 48,
-            child: Text(
-              '$label:',
-              style: AppTypography.textSmall.copyWith(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.grayscaleTitleActive,
-              ),
-            ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SizedBox(
+        width: 48,
+        child: Text(
+          '$label:',
+          style: AppTypography.textSmall.copyWith(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppColors.grayscaleTitleActive,
           ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              value,
-              style: AppTypography.textSmall.copyWith(
-                fontSize: 11,
-                color: AppColors.grayscaleBodyText,
-              ),
-            ),
+        ),
+      ),
+      const SizedBox(width: 6),
+      Expanded(
+        child: Text(
+          value,
+          style: AppTypography.textSmall.copyWith(
+            fontSize: 11,
+            color: AppColors.grayscaleBodyText,
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
+
+  NewsArticle _toNewsArticle(NewsArticleModel model) {
+    return NewsArticle(
+      id: model.id,
+      authorId: model.authorId,
+      category: model.category,
+      headline: model.headline,
+      sourceName: model.sourceName,
+      sourceId: model.sourceId,
+      sourceLogoAsset: model.sourceLogoAsset,
+      thumbnailAsset: model.thumbnailAsset,
+      timeAgo: model.timeAgo,
+      body: model.body,
+      likesCount: model.likesCount,
+      commentsCount: model.commentsCount,
+      isSourceFollowing: model.isSourceFollowing,
+      isBookmarked: model.isBookmarked,
+      isLiked: model.isLiked,
+    );
+  }
 }
 
 // ── SliverPersistentHeaderDelegate for pinned CategorySelector ─────────────
@@ -512,7 +624,10 @@ class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       color: AppColors.grayscaleWhite,
       child: Column(
