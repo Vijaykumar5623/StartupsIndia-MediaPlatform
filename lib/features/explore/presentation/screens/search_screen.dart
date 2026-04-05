@@ -141,7 +141,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             color: AppColors.grayscaleTitleActive,
           ),
           onChanged: (value) {
-            ref.read(searchQueryProvider.notifier).setQuery(value);
+            // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
+            ref.read(searchQueryProvider.notifier).state = value;
           },
           onTap: () => _searchFocusNode.requestFocus(),
           decoration: InputDecoration(
@@ -156,21 +157,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               color: AppColors.grayscaleBodyText,
               size: 20,
             ),
-            suffixIcon: IconButton(
-              onPressed: () {
-                if (_searchController.text.isNotEmpty) {
-                  _searchController.clear();
-                  ref.read(searchQueryProvider.notifier).clear();
-                }
-              },
-              icon: Icon(
-                _searchController.text.isEmpty
-                    ? Icons.tune_rounded
-                    : Icons.close_rounded,
-                color: AppColors.grayscaleBodyText,
-                size: 20,
-              ),
-            ),
+            suffixIcon: _searchController.text.isEmpty
+                ? const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.grayscaleBodyText,
+                    size: 20,
+                  )
+                : IconButton(
+                    tooltip: 'Clear search',
+                    onPressed: () {
+                      _searchController.clear();
+                      // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
+                      ref.read(searchQueryProvider.notifier).state = '';
+                      setState(() {});
+                    },
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: AppColors.grayscaleBodyText,
+                      size: 20,
+                    ),
+                  ),
           ),
         ),
       ),
@@ -230,7 +236,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           if (articles.isEmpty) {
             return Center(
               child: Text(
-                'No articles found',
+                'No news found',
                 style: AppTypography.textSmall.copyWith(
                   color: AppColors.grayscaleButtonText,
                 ),
