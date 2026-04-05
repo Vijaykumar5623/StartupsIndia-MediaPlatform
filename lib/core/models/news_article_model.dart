@@ -18,6 +18,8 @@ class NewsArticleModel {
   final bool isBookmarked;
   final bool isLiked;
   final bool isTrending;
+  final List<String> likedBy;
+  final List<String> bookmarkedBy;
 
   const NewsArticleModel({
     required this.id,
@@ -37,6 +39,8 @@ class NewsArticleModel {
     this.isBookmarked = false,
     this.isLiked = false,
     this.isTrending = false,
+    this.likedBy = const [],
+    this.bookmarkedBy = const [],
   });
 
   NewsArticleModel copyWith({
@@ -57,6 +61,8 @@ class NewsArticleModel {
     bool? isBookmarked,
     bool? isLiked,
     bool? isTrending,
+    List<String>? likedBy,
+    List<String>? bookmarkedBy,
   }) {
     return NewsArticleModel(
       id: id ?? this.id,
@@ -76,41 +82,50 @@ class NewsArticleModel {
       isBookmarked: isBookmarked ?? this.isBookmarked,
       isLiked: isLiked ?? this.isLiked,
       isTrending: isTrending ?? this.isTrending,
+      likedBy: likedBy ?? this.likedBy,
+      bookmarkedBy: bookmarkedBy ?? this.bookmarkedBy,
+    );
+  }
+
+  factory NewsArticleModel.fromMap(String id, Map<String, dynamic> map) {
+    final createdAtValue = map['createdAt'];
+    DateTime? createdAt;
+    if (createdAtValue is Timestamp) {
+      createdAt = createdAtValue.toDate();
+    } else if (createdAtValue is DateTime) {
+      createdAt = createdAtValue;
+    }
+
+    return NewsArticleModel(
+      id: id,
+      createdAt: createdAt,
+      authorId: map['authorId'] as String? ?? '',
+      category: map['category'] as String? ?? '',
+      headline: map['headline'] as String? ?? '',
+      sourceName: map['sourceName'] as String? ?? '',
+      sourceId: map['sourceId'] as String? ?? '',
+      sourceLogoAsset: map['sourceLogoAsset'] as String? ?? '',
+      thumbnailAsset: map['thumbnailAsset'] as String? ?? '',
+      timeAgo: map['timeAgo'] as String? ?? '',
+      body: map['body'] as String? ?? '',
+      likesCount: (map['likesCount'] as num?)?.toInt() ?? 0,
+      commentsCount: (map['commentsCount'] as num?)?.toInt() ?? 0,
+      isSourceFollowing: map['isSourceFollowing'] as bool? ?? false,
+      isBookmarked: map['isBookmarked'] as bool? ?? false,
+      isLiked: map['isLiked'] as bool? ?? false,
+      isTrending: map['isTrending'] as bool? ?? false,
+      likedBy: List<String>.from(map['likedBy'] as List? ?? []),
+      bookmarkedBy: List<String>.from(map['bookmarkedBy'] as List? ?? []),
     );
   }
 
   factory NewsArticleModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
-    final data = doc.data() ?? <String, dynamic>{};
-    final createdAtValue = data['createdAt'];
-    DateTime? createdAt;
-    if (createdAtValue is Timestamp) {
-      createdAt = createdAtValue.toDate();
-    }
-
-    return NewsArticleModel(
-      id: doc.id,
-      createdAt: createdAt,
-      authorId: data['authorId'] as String? ?? '',
-      category: data['category'] as String? ?? '',
-      headline: data['headline'] as String? ?? '',
-      sourceName: data['sourceName'] as String? ?? '',
-      sourceId: data['sourceId'] as String? ?? '',
-      sourceLogoAsset: data['sourceLogoAsset'] as String? ?? '',
-      thumbnailAsset: data['thumbnailAsset'] as String? ?? '',
-      timeAgo: data['timeAgo'] as String? ?? '',
-      body: data['body'] as String? ?? '',
-      likesCount: (data['likesCount'] as num?)?.toInt() ?? 0,
-      commentsCount: (data['commentsCount'] as num?)?.toInt() ?? 0,
-      isSourceFollowing: data['isSourceFollowing'] as bool? ?? false,
-      isBookmarked: data['isBookmarked'] as bool? ?? false,
-      isLiked: data['isLiked'] as bool? ?? false,
-      isTrending: data['isTrending'] as bool? ?? false,
-    );
+    return NewsArticleModel.fromMap(doc.id, doc.data() ?? <String, dynamic>{});
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'authorId': authorId,
       'category': category,
@@ -127,6 +142,14 @@ class NewsArticleModel {
       'isBookmarked': isBookmarked,
       'isLiked': isLiked,
       'isTrending': isTrending,
+      'likedBy': likedBy,
+      'bookmarkedBy': bookmarkedBy,
+    };
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return <String, dynamic>{
+      ...toMap(),
       'createdAt': createdAt == null
           ? FieldValue.serverTimestamp()
           : Timestamp.fromDate(createdAt!),

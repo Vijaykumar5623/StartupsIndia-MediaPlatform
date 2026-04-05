@@ -1,45 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/news_article.dart';
 import '../../../../theme/style_guide.dart';
 import '../screens/article_detail_screen.dart';
 
 /// Reusable tile for the 'Latest' news feed section.
-/// Matches the Figma design: thumbnail left, category/headline/source right.
-class NewsTile extends StatelessWidget {
+/// Matches the Figma design: thumbnail left, category/headline/source right, bookmark icon.
+class NewsTile extends ConsumerStatefulWidget {
   final NewsArticle article;
   final VoidCallback? onTap;
 
   const NewsTile({super.key, required this.article, this.onTap});
 
   @override
+  ConsumerState<NewsTile> createState() => _NewsTileState();
+}
+
+class _NewsTileState extends ConsumerState<NewsTile> {
+  late bool _isBookmarked;
+
+  @override
+  void initState() {
+    super.initState();
+    _isBookmarked = widget.article.isBookmarked;
+  }
+
+  @override
+  void didUpdateWidget(NewsTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _isBookmarked = widget.article.isBookmarked;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap ?? () => _openDetail(context),
+      onTap: widget.onTap ?? () => _openDetail(context),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Thumbnail ────────────────────────────────────────────
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: article.thumbnailAsset.startsWith('http')
-                  ? CachedNetworkImage(
-                      imageUrl: article.thumbnailAsset,
-                      width: 96,
-                      height: 96,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => _thumbnailFallback(),
-                      errorWidget: (_, __, ___) => _thumbnailFallback(),
-                    )
-                  : Image.asset(
-                      article.thumbnailAsset,
-                      width: 96,
-                      height: 96,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _thumbnailFallback(),
-                    ),
+            Hero(
+              tag: widget.article.id,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: widget.article.thumbnailAsset.startsWith('http')
+                    ? CachedNetworkImage(
+                        imageUrl: widget.article.thumbnailAsset,
+                        width: 96,
+                        height: 96,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => _thumbnailFallback(),
+                        errorWidget: (context, url, error) =>
+                            _thumbnailFallback(),
+                      )
+                    : Image.asset(
+                        widget.article.thumbnailAsset,
+                        width: 96,
+                        height: 96,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _thumbnailFallback(),
+                      ),
+              ),
             ),
 
             const SizedBox(width: 12),
@@ -51,7 +76,7 @@ class NewsTile extends StatelessWidget {
                 children: [
                   // Category tag
                   Text(
-                    article.category.toUpperCase(),
+                    widget.article.category.toUpperCase(),
                     style: AppTypography.textSmall.copyWith(
                       color: AppColors.primaryDefault,
                       fontWeight: FontWeight.w600,
@@ -63,7 +88,7 @@ class NewsTile extends StatelessWidget {
 
                   // Headline
                   Text(
-                    article.headline,
+                    widget.article.headline,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.textSmall.copyWith(
@@ -75,32 +100,34 @@ class NewsTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // Source row: logo + name + time
+                  // Source row: logo + name + time + bookmark
                   Row(
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(3),
-                        child: article.sourceLogoAsset.startsWith('http')
+                        child: widget.article.sourceLogoAsset.startsWith('http')
                             ? CachedNetworkImage(
-                                imageUrl: article.sourceLogoAsset,
+                                imageUrl: widget.article.sourceLogoAsset,
                                 width: 20,
                                 height: 20,
                                 fit: BoxFit.cover,
-                                placeholder: (_, __) => _logoFallback(),
-                                errorWidget: (_, __, ___) => _logoFallback(),
+                                placeholder: (context, url) => _logoFallback(),
+                                errorWidget: (context, url, error) =>
+                                    _logoFallback(),
                               )
                             : Image.asset(
-                                article.sourceLogoAsset,
+                                widget.article.sourceLogoAsset,
                                 width: 20,
                                 height: 20,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _logoFallback(),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    _logoFallback(),
                               ),
                       ),
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          article.sourceName,
+                          widget.article.sourceName,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.textSmall.copyWith(
                             color: AppColors.grayscaleBodyText,
@@ -117,10 +144,24 @@ class NewsTile extends StatelessWidget {
                       ),
                       const SizedBox(width: 3),
                       Text(
-                        article.timeAgo,
+                        widget.article.timeAgo,
                         style: AppTypography.textSmall.copyWith(
                           color: AppColors.grayscaleButtonText,
                           fontSize: 11,
+                        ),
+                      ),
+                      const Spacer(),
+                      // Bookmark icon
+                      GestureDetector(
+                        onTap: _toggleBookmark,
+                        child: Icon(
+                          _isBookmarked
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_outline_rounded,
+                          color: _isBookmarked
+                              ? AppColors.primaryDefault
+                              : AppColors.grayscaleButtonText,
+                          size: 20,
                         ),
                       ),
                     ],
@@ -132,6 +173,16 @@ class NewsTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _toggleBookmark() {
+    // Optimistic UI update
+    setState(() {
+      _isBookmarked = !_isBookmarked;
+    });
+
+    // In a real app, you'd call the repository here to persist the change
+    // For now, this just shows the optimistic toggle
   }
 
   Widget _thumbnailFallback() {
@@ -162,7 +213,7 @@ class NewsTile extends StatelessWidget {
   void _openDetail(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => ArticleDetailScreen(article: article),
+        builder: (_) => ArticleDetailScreen(article: widget.article),
       ),
     );
   }

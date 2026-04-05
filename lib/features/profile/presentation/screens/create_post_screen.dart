@@ -1,16 +1,21 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../../core/models/news_article_model.dart';
+import '../../../../../core/repository/firestore_repository.dart';
+import '../../../../../features/auth/presentation/providers/auth_providers.dart';
 import '../../../../../theme/style_guide.dart';
 
-class CreatePostScreen extends StatefulWidget {
+class CreatePostScreen extends ConsumerStatefulWidget {
   const CreatePostScreen({super.key});
 
   @override
-  State<CreatePostScreen> createState() => _CreatePostScreenState();
+  ConsumerState<CreatePostScreen> createState() => _CreatePostScreenState();
 }
 
-class _CreatePostScreenState extends State<CreatePostScreen> {
+class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _bodyController = TextEditingController();
   final FocusNode _titleFocusNode = FocusNode();
@@ -18,7 +23,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final ImagePicker _picker = ImagePicker();
 
   Uint8List? _coverImageBytes;
-  String? _coverImagePath;
+  XFile? _coverImageFile;
   bool _isPublishing = false;
 
   bool get _canPublish {
@@ -142,7 +147,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 )
               : CustomPaint(
                   painter: _DashedBorderPainter(
-                    color: AppColors.grayscaleButtonText.withOpacity(0.6),
+                    color: AppColors.grayscaleButtonText.withValues(alpha: 0.6),
                     radius: 12,
                   ),
                   child: Center(
@@ -235,7 +240,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         decoration: BoxDecoration(
           color: AppColors.grayscaleWhite,
           border: Border(
-            top: BorderSide(color: AppColors.grayscaleLine.withOpacity(0.85)),
+            top: BorderSide(
+              color: AppColors.grayscaleLine.withValues(alpha: 0.85),
+            ),
           ),
         ),
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -350,23 +357,99 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     setState(() {
       _coverImageBytes = bytes;
-      _coverImagePath = image.path;
+      _coverImageFile = image;
     });
   }
 
   Future<void> _publish() async {
-    setState(() => _isPublishing = true);
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-
-    if (!mounted) {
+    // Validate
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a title')));
       return;
     }
 
-    setState(() => _isPublishing = false);
+    if (_coverImageBytes == null || _coverImageFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a cover image')),
+      );
+      return;
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('News published successfully')),
-    );
+    // Show loading
+    setState(() => _isPublishing = true);
+
+    try {
+      // Get current user ID
+      final userModel = await ref
+          .read(authRepositoryProvider)
+          .getCurrentUserModel();
+      if (userModel == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Upload image to Firebase Storage
+      final File imageFile = File(_coverImageFile!.path);
+      final String imageUrl = await ref
+          .read(firestoreRepositoryProvider)
+          .uploadImage(imageFile, 'article_covers/');
+
+      // Get current timestamp
+      final now = DateTime.now();
+
+      // Create article model
+      final article = NewsArticleModel(
+        id: '${userModel.uid}_${now.millisecondsSinceEpoch}',
+        createdAt: now,
+        authorId: userModel.uid,
+        category: 'Trending', // Default category
+        headline: _titleController.text.trim(),
+        sourceName:
+            userModel.displayName ??
+            'Anonymous', // ignore: unnecessary_null_coalescing
+        sourceId: userModel.uid,
+        sourceLogoAsset:
+            userModel.avatarUrl ??
+            'assets/icons/default_avatar.png', // ignore: unnecessary_null_coalescing
+        thumbnailAsset: imageUrl,
+        timeAgo: 'now',
+        body: _bodyController.text.trim(),
+        likesCount: 0,
+        commentsCount: 0,
+        isSourceFollowing: false,
+        isBookmarked: false,
+        isLiked: false,
+        isTrending: false,
+        likedBy: [],
+        bookmarkedBy: [],
+      );
+
+      // Save article to Firestore
+      await ref.read(firestoreRepositoryProvider).createArticle(article);
+
+      if (!mounted) return;
+
+      // Success feedback
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('News Published Successfully!'),
+          backgroundColor: Color(0xFF4CAF50),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() => _isPublishing = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to publish: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _onInputChanged() {

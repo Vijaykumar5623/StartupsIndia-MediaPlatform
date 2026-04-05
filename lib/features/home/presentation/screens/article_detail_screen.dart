@@ -1,12 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/repository/firestore_repository.dart';
+import '../../../../features/auth/presentation/providers/auth_providers.dart';
 import '../../../../theme/style_guide.dart';
 import '../../../explore/data/repositories/mock_source_repository.dart';
 import '../../../explore/domain/repositories/source_repository.dart';
 import '../../domain/models/news_article.dart';
 import 'comments_screen.dart';
 
-class ArticleDetailScreen extends StatefulWidget {
+class ArticleDetailScreen extends ConsumerStatefulWidget {
   final NewsArticle article;
   final SourceRepository? sourceRepository;
 
@@ -17,16 +20,18 @@ class ArticleDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<ArticleDetailScreen> createState() => _ArticleDetailScreenState();
+  ConsumerState<ArticleDetailScreen> createState() =>
+      _ArticleDetailScreenState();
 }
 
-class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
+class _ArticleDetailScreenState extends ConsumerState<ArticleDetailScreen> {
   late final SourceRepository _sourceRepository;
   late bool _isFollowing;
   late bool _isLiked;
   late bool _isBookmarked;
   late int _likesCount;
   bool _isUpdatingFollow = false;
+  String? _userId;
 
   @override
   void initState() {
@@ -36,6 +41,20 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
     _isLiked = widget.article.isLiked;
     _isBookmarked = widget.article.isBookmarked;
     _likesCount = widget.article.likesCount;
+    _initializeUserId();
+  }
+
+  Future<void> _initializeUserId() async {
+    try {
+      final userModel = await ref
+          .read(authRepositoryProvider)
+          .getCurrentUserModel();
+      if (mounted) {
+        setState(() => _userId = userModel?.uid);
+      }
+    } catch (e) {
+      // Handle error silently
+    }
   }
 
   @override
@@ -178,13 +197,13 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
             ? CachedNetworkImage(
                 imageUrl: logo,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => _logoFallback(),
-                errorWidget: (_, __, ___) => _logoFallback(),
+                placeholder: (context, url) => _logoFallback(),
+                errorWidget: (context, url, error) => _logoFallback(),
               )
             : Image.asset(
                 logo,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _logoFallback(),
+                errorBuilder: (context, error, stackTrace) => _logoFallback(),
               ),
       ),
     );
@@ -192,22 +211,26 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
 
   Widget _buildHeroImage() {
     final image = widget.article.thumbnailAsset;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: AspectRatio(
-        aspectRatio: 16 / 10,
-        child: image.startsWith('http')
-            ? CachedNetworkImage(
-                imageUrl: image,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => _imageFallback(),
-                errorWidget: (_, __, ___) => _imageFallback(),
-              )
-            : Image.asset(
-                image,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _imageFallback(),
-              ),
+    return Hero(
+      tag: widget.article.id,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: AspectRatio(
+          aspectRatio: 16 / 10,
+          child: image.startsWith('http')
+              ? CachedNetworkImage(
+                  imageUrl: image,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => _imageFallback(),
+                  errorWidget: (context, url, error) => _imageFallback(),
+                )
+              : Image.asset(
+                  image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _imageFallback(),
+                ),
+        ),
       ),
     );
   }
@@ -246,7 +269,9 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
         decoration: BoxDecoration(
           color: AppColors.grayscaleWhite,
           border: Border(
-            top: BorderSide(color: AppColors.grayscaleLine.withOpacity(0.8)),
+            top: BorderSide(
+              color: AppColors.grayscaleLine.withValues(alpha: 0.8),
+            ),
           ),
         ),
         child: Row(
@@ -338,7 +363,10 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
     return widget.article.sourceName.toLowerCase().replaceAll(' ', '_');
   }
 
-  void _toggleLike() {
+  void _toggleLike() async {
+    if (_userId == null) return;
+
+    // Optimistic update
     setState(() {
       _isLiked = !_isLiked;
       _likesCount += _isLiked ? 1 : -1;
@@ -346,10 +374,36 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
         _likesCount = 0;
       }
     });
+
+    // Persist to Firestore
+    try {
+      await ref
+          .read(firestoreRepositoryProvider)
+          .toggleLike(widget.article.id, _userId!);
+    } catch (e) {
+      // Revert on error
+      setState(() {
+        _isLiked = !_isLiked;
+        _likesCount += _isLiked ? 1 : -1;
+      });
+    }
   }
 
-  void _toggleBookmark() {
+  void _toggleBookmark() async {
+    if (_userId == null) return;
+
+    // Optimistic update
     setState(() => _isBookmarked = !_isBookmarked);
+
+    // Persist to Firestore
+    try {
+      await ref
+          .read(firestoreRepositoryProvider)
+          .toggleBookmark(widget.article.id, _userId!);
+    } catch (e) {
+      // Revert on error
+      setState(() => _isBookmarked = !_isBookmarked);
+    }
   }
 
   void _showSharePlaceholder() {

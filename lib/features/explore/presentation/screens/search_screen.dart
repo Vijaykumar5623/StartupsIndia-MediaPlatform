@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../theme/style_guide.dart';
 import '../../../home/presentation/widgets/news_tile.dart';
+import '../../../home/presentation/providers/news_provider.dart';
+import '../../../home/domain/models/news_article.dart';
 import '../../domain/models/mock_explore_data.dart';
 import '../widgets/topic_search_tile.dart';
 import '../widgets/author_tile.dart';
@@ -9,7 +12,7 @@ import 'source_profile_screen.dart';
 
 enum SearchTab { news, topics, author }
 
-class SearchScreen extends StatefulWidget {
+class SearchScreen extends ConsumerStatefulWidget {
   final bool showBottomNav;
   final SearchTab initialTab;
 
@@ -20,10 +23,10 @@ class SearchScreen extends StatefulWidget {
   });
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
@@ -137,6 +140,9 @@ class _SearchScreenState extends State<SearchScreen> {
           style: AppTypography.textSmall.copyWith(
             color: AppColors.grayscaleTitleActive,
           ),
+          onChanged: (value) {
+            ref.read(searchQueryProvider.notifier).setQuery(value);
+          },
           onTap: () => _searchFocusNode.requestFocus(),
           decoration: InputDecoration(
             hintText: 'Search',
@@ -154,6 +160,7 @@ class _SearchScreenState extends State<SearchScreen> {
               onPressed: () {
                 if (_searchController.text.isNotEmpty) {
                   _searchController.clear();
+                  ref.read(searchQueryProvider.notifier).clear();
                 }
               },
               icon: Icon(
@@ -217,12 +224,48 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildBodyList() {
     if (_currentTab == SearchTab.news) {
-      return ListView.builder(
-        itemCount: MockExploreData.news.length,
-        physics: const BouncingScrollPhysics(),
-        itemBuilder: (context, index) {
-          return NewsTile(article: MockExploreData.news[index]);
+      final searchAsync = ref.watch(searchArticlesProvider);
+      return searchAsync.when(
+        data: (articles) {
+          if (articles.isEmpty) {
+            return Center(
+              child: Text(
+                'No articles found',
+                style: AppTypography.textSmall.copyWith(
+                  color: AppColors.grayscaleButtonText,
+                ),
+              ),
+            );
+          }
+          return ListView.builder(
+            itemCount: articles.length,
+            physics: const BouncingScrollPhysics(),
+            itemBuilder: (context, index) {
+              final article = articles[index];
+              // Convert NewsArticleModel to NewsArticle
+              final newsArticle = NewsArticle(
+                id: article.id,
+                authorId: article.authorId,
+                category: article.category,
+                headline: article.headline,
+                sourceName: article.sourceName,
+                sourceId: article.sourceId,
+                sourceLogoAsset: article.sourceLogoAsset,
+                thumbnailAsset: article.thumbnailAsset,
+                timeAgo: article.timeAgo,
+                body: article.body,
+                likesCount: article.likesCount,
+                commentsCount: article.commentsCount,
+                isSourceFollowing: article.isSourceFollowing,
+                isBookmarked: article.isBookmarked,
+                isLiked: article.isLiked,
+              );
+              return NewsTile(article: newsArticle);
+            },
+          );
         },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(child: Text('Error: $error')),
       );
     }
 

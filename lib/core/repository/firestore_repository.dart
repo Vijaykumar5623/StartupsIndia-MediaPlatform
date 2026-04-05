@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
 
 import '../models/news_article_model.dart';
 import '../models/user_model.dart';
@@ -88,6 +90,53 @@ class FirestoreRepository {
     return _articles
         .doc(article.id)
         .set(article.toFirestore(), SetOptions(merge: true));
+  }
+
+  Future<String> uploadImage(File imageFile, String path) async {
+    final storageRef = FirebaseStorage.instance.ref().child(path);
+    final uploadTask = await storageRef.putFile(imageFile);
+    return uploadTask.ref.getDownloadURL();
+  }
+
+  Future<void> createArticle(NewsArticleModel article) async {
+    final docId = article.id.trim().isEmpty ? _articles.doc().id : article.id;
+    await _articles.doc(docId).set(article.toFirestore(), SetOptions(merge: true));
+  }
+
+  Future<void> toggleLike(String articleId, String userId) async {
+    final doc = await _articles.doc(articleId).get();
+    if (!doc.exists) return;
+
+    final likedBy = List<String>.from(doc['likedBy'] as List? ?? []);
+    if (likedBy.contains(userId)) {
+      // Remove like
+      await _articles.doc(articleId).update({
+        'likedBy': FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      // Add like
+      await _articles.doc(articleId).update({
+        'likedBy': FieldValue.arrayUnion([userId]),
+      });
+    }
+  }
+
+  Future<void> toggleBookmark(String articleId, String userId) async {
+    final doc = await _articles.doc(articleId).get();
+    if (!doc.exists) return;
+
+    final bookmarkedBy = List<String>.from(doc['bookmarkedBy'] as List? ?? []);
+    if (bookmarkedBy.contains(userId)) {
+      // Remove bookmark
+      await _articles.doc(articleId).update({
+        'bookmarkedBy': FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      // Add bookmark
+      await _articles.doc(articleId).update({
+        'bookmarkedBy': FieldValue.arrayUnion([userId]),
+      });
+    }
   }
 }
 
