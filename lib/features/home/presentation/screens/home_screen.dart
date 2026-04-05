@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/utils/time_format_helper.dart';
 import '../../../../theme/style_guide.dart';
 import '../../../../core/models/news_article_model.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -594,7 +595,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       sourceId: model.sourceId,
       sourceLogoAsset: model.sourceLogoAsset,
       thumbnailAsset: model.thumbnailAsset,
-      timeAgo: model.timeAgo,
+      timeAgo: formatArticleTimestamp(model.createdAt, fallback: model.timeAgo),
       body: model.body,
       likesCount: model.likesCount,
       commentsCount: model.commentsCount,

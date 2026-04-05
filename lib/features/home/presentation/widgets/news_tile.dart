@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
+import '../../../../core/models/user_model.dart';
+import '../../../../core/repository/firestore_repository.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/models/news_article.dart';
 import '../../../../theme/style_guide.dart';
 import '../screens/article_detail_screen.dart';
+
+final tileLikeStateProvider = StateProvider.autoDispose.family<bool, String>((
+  ref,
+  articleId,
+) {
+  return false;
+});
+
+final tileAuthorProvider = FutureProvider.autoDispose
+    .family<UserModel?, String>((ref, authorId) {
+      if (authorId.trim().isEmpty) return null;
+      return ref.read(firestoreRepositoryProvider).getUserById(authorId);
+    });
 
 /// Reusable tile for the 'Latest' news feed section.
 /// Matches the Figma design: thumbnail left, category/headline/source right, bookmark icon.
@@ -19,21 +36,53 @@ class NewsTile extends ConsumerStatefulWidget {
 
 class _NewsTileState extends ConsumerState<NewsTile> {
   late bool _isBookmarked;
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
     _isBookmarked = widget.article.isBookmarked;
+    ref.read(tileLikeStateProvider(widget.article.id).notifier).state =
+        widget.article.isLiked;
+    _loadCurrentUserId();
   }
 
   @override
   void didUpdateWidget(NewsTile oldWidget) {
     super.didUpdateWidget(oldWidget);
     _isBookmarked = widget.article.isBookmarked;
+    if (oldWidget.article.id != widget.article.id) {
+      ref.read(tileLikeStateProvider(widget.article.id).notifier).state =
+          widget.article.isLiked;
+    }
+  }
+
+  Future<void> _loadCurrentUserId() async {
+    try {
+      final userModel = await ref
+          .read(authRepositoryProvider)
+          .getCurrentUserModel();
+      if (!mounted) return;
+      setState(() {
+        _currentUserId = userModel?.uid;
+      });
+    } catch (_) {
+      // Ignore and keep guest behavior.
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLiked = ref.watch(tileLikeStateProvider(widget.article.id));
+    final authorAsync = ref.watch(tileAuthorProvider(widget.article.authorId));
+    final authorName = authorAsync.maybeWhen(
+      data: (user) {
+        final name = user?.displayName.trim() ?? '';
+        return name.isEmpty ? widget.article.sourceName : name;
+      },
+      orElse: () => widget.article.sourceName,
+    );
+
     return GestureDetector(
       onTap: widget.onTap ?? () => _openDetail(context),
       child: Padding(
@@ -52,7 +101,8 @@ class _NewsTileState extends ConsumerState<NewsTile> {
                         width: 96,
                         height: 96,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => _thumbnailFallback(),
+                        placeholder: (context, url) =>
+                            _loadingPlaceholder(width: 96, height: 96),
                         errorWidget: (context, url, error) =>
                             _thumbnailFallback(),
                       )
@@ -111,7 +161,8 @@ class _NewsTileState extends ConsumerState<NewsTile> {
                                 width: 20,
                                 height: 20,
                                 fit: BoxFit.cover,
-                                placeholder: (context, url) => _logoFallback(),
+                                placeholder: (context, url) =>
+                                    _loadingPlaceholder(width: 20, height: 20),
                                 errorWidget: (context, url, error) =>
                                     _logoFallback(),
                               )
@@ -127,7 +178,7 @@ class _NewsTileState extends ConsumerState<NewsTile> {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          widget.article.sourceName,
+                          authorName,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.textSmall.copyWith(
                             color: AppColors.grayscaleBodyText,
@@ -151,6 +202,19 @@ class _NewsTileState extends ConsumerState<NewsTile> {
                         ),
                       ),
                       const Spacer(),
+                      GestureDetector(
+                        onTap: _toggleLike,
+                        child: Icon(
+                          isLiked
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          color: isLiked
+                              ? Colors.redAccent
+                              : AppColors.grayscaleButtonText,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       // Bookmark icon
                       GestureDetector(
                         onTap: _toggleBookmark,
@@ -185,6 +249,37 @@ class _NewsTileState extends ConsumerState<NewsTile> {
     // For now, this just shows the optimistic toggle
   }
 
+  Future<void> _toggleLike() async {
+    final previous = ref.read(tileLikeStateProvider(widget.article.id));
+    ref.read(tileLikeStateProvider(widget.article.id).notifier).state =
+        !previous;
+
+    final userId = _currentUserId;
+    if (userId == null || userId.isEmpty) {
+      ref.read(tileLikeStateProvider(widget.article.id).notifier).state =
+          previous;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to like news')),
+      );
+      return;
+    }
+
+    try {
+      await ref
+          .read(firestoreRepositoryProvider)
+          .toggleLike(widget.article.id, userId);
+    } catch (_) {
+      ref.read(tileLikeStateProvider(widget.article.id).notifier).state =
+          previous;
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update like. Try again.')),
+      );
+    }
+  }
+
   Widget _thumbnailFallback() {
     return Container(
       width: 96,
@@ -207,6 +302,24 @@ class _NewsTileState extends ConsumerState<NewsTile> {
         size: 12,
         color: AppColors.grayscaleButtonText,
       ),
+    );
+  }
+
+  Widget _loadingPlaceholder({required double width, required double height}) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.35, end: 0.8),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeInOut,
+      builder: (context, value, child) {
+        return Container(
+          width: width,
+          height: height,
+          color: AppColors.grayscaleSecondaryButton.withValues(alpha: value),
+        );
+      },
+      onEnd: () {
+        if (mounted) setState(() {});
+      },
     );
   }
 

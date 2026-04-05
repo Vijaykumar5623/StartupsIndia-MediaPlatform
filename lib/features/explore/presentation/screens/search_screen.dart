@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../core/utils/time_format_helper.dart';
 import '../../../../theme/style_guide.dart';
 import '../../../home/presentation/widgets/news_tile.dart';
 import '../../../home/presentation/providers/news_provider.dart';
@@ -258,7 +259,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 sourceId: article.sourceId,
                 sourceLogoAsset: article.sourceLogoAsset,
                 thumbnailAsset: article.thumbnailAsset,
-                timeAgo: article.timeAgo,
+                timeAgo: formatArticleTimestamp(
+                  article.createdAt,
+                  fallback: article.timeAgo,
+                ),
                 body: article.body,
                 likesCount: article.likesCount,
                 commentsCount: article.commentsCount,

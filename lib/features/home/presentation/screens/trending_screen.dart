@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/models/news_article_model.dart';
+import '../../../../core/utils/time_format_helper.dart';
 import '../../../../theme/style_guide.dart';
 import '../../domain/models/news_article.dart';
 import '../providers/news_provider.dart';
@@ -94,7 +95,7 @@ class TrendingScreen extends ConsumerWidget {
       sourceId: model.sourceId,
       sourceLogoAsset: model.sourceLogoAsset,
       thumbnailAsset: model.thumbnailAsset,
-      timeAgo: model.timeAgo,
+      timeAgo: formatArticleTimestamp(model.createdAt, fallback: model.timeAgo),
       body: model.body,
       likesCount: model.likesCount,
       commentsCount: model.commentsCount,
