@@ -381,19 +381,22 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     setState(() => _isPublishing = true);
 
     try {
+      // Read providers before async operations to avoid ref binding issues
+      final authRepository = ref.read(authRepositoryProvider);
+      final firestoreRepository = ref.read(firestoreRepositoryProvider);
+
       // Get current user ID
-      final userModel = await ref
-          .read(authRepositoryProvider)
-          .getCurrentUserModel();
+      final userModel = await authRepository.getCurrentUserModel();
       if (userModel == null) {
         throw Exception('User not authenticated');
       }
 
       // Upload image to Firebase Storage
       final File imageFile = File(_coverImageFile!.path);
-      final String imageUrl = await ref
-          .read(firestoreRepositoryProvider)
-          .uploadImage(imageFile, 'article_covers/');
+      final String imageUrl = await firestoreRepository.uploadImage(
+        imageFile,
+        'article_covers/',
+      );
 
       // Get current timestamp
       final now = DateTime.now();
@@ -426,7 +429,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       );
 
       // Save article to Firestore
-      await ref.read(firestoreRepositoryProvider).createArticle(article);
+      await firestoreRepository.createArticle(article);
 
       if (!mounted) return;
 
