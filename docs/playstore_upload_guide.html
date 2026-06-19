@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StartupsIndia — Play Store Upload Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 48px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* Cover */
+  .cover {
+    text-align: center;
+    padding: 60px 0 48px;
+    border-bottom: 3px solid #e63946;
+    margin-bottom: 48px;
+  }
+  .cover .logo-text {
+    font-size: 32px;
+    font-weight: 800;
+    color: #e63946;
+    letter-spacing: -0.5px;
+  }
+  .cover .subtitle {
+    font-size: 16px;
+    color: #555;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+  .cover .meta {
+    margin-top: 24px;
+    font-size: 12px;
+    color: #999;
+  }
+
+  /* Part headers */
+  .part {
+    margin-bottom: 48px;
+    page-break-inside: avoid;
+  }
+  .part-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #e63946;
+    margin-bottom: 6px;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: 20px;
+  }
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin: 20px 0 8px;
+  }
+
+  /* Steps */
+  .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
+  .step-number {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    background: #e63946;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+  .step-content strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 4px;
+  }
+  .step-content p, .step-content ul {
+    color: #444;
+    font-size: 13px;
+  }
+  .step-content ul {
+    padding-left: 18px;
+    margin-top: 4px;
+  }
+  .step-content li { margin-bottom: 2px; }
+
+  /* Code / copy blocks */
+  .copy-block {
+    background: #f7f7f7;
+    border: 1px solid #e0e0e0;
+    border-left: 4px solid #e63946;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin: 10px 0;
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    color: #222;
+    line-height: 1.6;
+  }
+  .copy-block.large {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .field-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #888;
+    margin-bottom: 4px;
+    margin-top: 16px;
+  }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  th {
+    background: #f0f0f0;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 12px;
+    color: #333;
+    border: 1px solid #ddd;
+  }
+  td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    color: #444;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  /* Callout */
+  .callout {
+    background: #fff8f0;
+    border: 1px solid #ffd6a0;
+    border-left: 4px solid #f4a025;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #6b4c00;
+    margin: 16px 0;
+  }
+  .callout strong { color: #4a3000; }
+
+  .callout-green {
+    background: #f0fff4;
+    border: 1px solid #a0f0c0;
+    border-left: 4px solid #22c55e;
+    color: #14532d;
+  }
+
+  /* Screenshot list */
+  .screenshot-list {
+    counter-reset: screenshots;
+    list-style: none;
+    padding: 0;
+  }
+  .screenshot-list li {
+    counter-increment: screenshots;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+    color: #333;
+  }
+  .screenshot-list li::before {
+    content: counter(screenshots);
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #555;
+  }
+
+  /* Answer table */
+  .answer { font-weight: 700; color: #111; }
+  .note { font-size: 11px; color: #888; font-style: italic; }
+
+  /* Page break */
+  .page-break { page-break-after: always; }
+
+  @media print {
+    body { padding: 0; font-size: 13px; }
+    .cover { padding: 40px 0 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="logo-text">StartupsIndia</div>
+  <div class="subtitle">Google Play Store — Upload & Submission Guide</div>
+  <div class="meta">Prepared for client handoff &nbsp;·&nbsp; May 2026 &nbsp;·&nbsp; Confidential</div>
+</div>
+
+<!-- PART 1 — STORE LISTING CONTENT -->
+<div class="part">
+  <div class="part-label">Part 1</div>
+  <h2>Store Listing Content</h2>
+  <p style="color:#555; margin-bottom:20px;">Copy and paste the content below exactly into the Play Console store listing fields.</p>
+
+  <div class="field-label">App Name (30 chars max)</div>
+  <div class="copy-block">StartupsIndia</div>
+
+  <div class="field-label">Short Description (80 chars max)</div>
+  <div class="copy-block">India's startup news — funding, founders, AI, Fintech & more in one app</div>
+
+  <div class="field-label">Full Description (paste as-is)</div>
+  <div class="copy-block large">StartupsIndia is the go-to news and media platform for India's startup ecosystem. Whether you're a founder, investor, student, or startup enthusiast — stay ahead with real-time stories, funding announcements, and deep-dive features from across the Indian startup world.
+
+WHAT YOU GET
+
+• Curated startup news across AI, SaaS, Fintech, Edtech, E-commerce, Creator Economy, and more
+• Trending stories and featured articles updated daily
+• Bookmark articles to read later, like stories you love
+• Follow topics that match your interests
+• Comment and engage with the startup community
+• Personalised feed based on your role — Founder, Investor, Mentor, Student, or Enthusiast
+
+BUILT FOR THE ECOSYSTEM
+
+StartupsIndia brings together news from across India's most active startup hubs. From seed rounds to IPOs, product launches to founder interviews — everything that matters to the ecosystem, in one place.
+
+PERSONALISED FROM DAY ONE
+
+Tell us who you are and what you care about during onboarding. We'll tailor your feed so you see more of what's relevant — less noise, more signal.
+
+STAY CONNECTED
+
+• Push notifications for breaking stories
+• Trending section for what the ecosystem is talking about right now
+• Profile page to track your activity and saved articles
+
+Download StartupsIndia and stay plugged into the future of Indian business.</div>
+
+  <div class="field-label">Category</div>
+  <div class="copy-block">News &amp; Magazines</div>
+
+  <div class="field-label">Tags / Keywords</div>
+  <div class="copy-block">startup news india, funding news, founder stories, indian startups, tech news india, fintech news, startup ecosystem</div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- PART 2 — SCREENSHOTS -->
+<div class="part">
+  <div class="part-label">Part 2</div>
+  <h2>Screenshots to Capture</h2>
+  <p style="color:#555; margin-bottom:16px;">Take screenshots on a phone (Pixel or Samsung preferred). Minimum size: <strong>1080×1920px</strong>. At least 2 required, 5 recommended. Capture these screens in order:</p>
+
+  <ul class="screenshot-list">
+    <li>Home feed with news articles loaded and visible</li>
+    <li>Article detail screen — a full article open and scrolled slightly</li>
+    <li>Hero / Trending banner at the top of the home screen</li>
+    <li>Explore or Search screen</li>
+    <li>Profile screen showing saved articles or user details</li>
+  </ul>
+
+  <div class="callout" style="margin-top:20px;">
+    <strong>Tip:</strong> Use a real device with real content loaded — not a simulator. Screenshots with actual articles look far more credible to Google reviewers.
+  </div>
+
+  <h3>Graphic Assets Required</h3>
+  <table>
+    <tr><th>Asset</th><th>Size</th><th>Notes</th></tr>
+    <tr><td>Hi-res app icon</td><td>512 × 512 px PNG</td><td>No transparency / alpha channel</td></tr>
+    <tr><td>Feature graphic</td><td>1024 × 512 px PNG or JPG</td><td>Shown at top of store listing — include the logo and a tagline</td></tr>
+    <tr><td>Phone screenshots</td><td>Min 1080 × 1920 px</td><td>At least 2, max 8</td></tr>
+  </table>
+</div>
+
+<!-- PART 3 — DATA SAFETY -->
+<div class="part">
+  <div class="part-label">Part 3</div>
+  <h2>Data Safety Form Answers</h2>
+  <p style="color:#555; margin-bottom:16px;">Fill these in at <strong>Play Console → Policy → Data safety</strong>. Answer exactly as shown.</p>
+
+  <table>
+    <tr><th>Data Type</th><th>Collected?</th><th>Purpose</th></tr>
+    <tr><td>Name</td><td class="answer">Yes</td><td>Account functionality</td></tr>
+    <tr><td>Email address</td><td class="answer">Yes</td><td>Account functionality</td></tr>
+    <tr><td>User IDs</td><td class="answer">Yes</td><td>Account functionality</td></tr>
+    <tr><td>Profile photo</td><td class="answer">Yes</td><td>Account functionality</td></tr>
+    <tr><td>App interactions (likes, bookmarks)</td><td class="answer">Yes</td><td>App functionality &amp; personalisation</td></tr>
+    <tr><td>Device identifiers (FCM token)</td><td class="answer">Yes</td><td>Push notifications</td></tr>
+    <tr><td>Crash logs</td><td class="answer">No</td><td>—</td></tr>
+    <tr><td>Location</td><td class="answer">No</td><td>—</td></tr>
+    <tr><td>Financial info</td><td class="answer">No</td><td>—</td></tr>
+  </table>
+
+  <table style="margin-top:16px;">
+    <tr><th>Question</th><th>Answer</th></tr>
+    <tr><td>Is data encrypted in transit?</td><td class="answer">Yes</td></tr>
+    <tr><td>Can users request data deletion?</td><td class="answer">Yes</td></tr>
+    <tr><td>Deletion link</td><td>startupsindia.in/delete-account</td></tr>
+    <tr><td>Do you share data with third parties?</td><td class="answer">No</td></tr>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- PART 4 — CONTENT RATING -->
+<div class="part">
+  <div class="part-label">Part 4</div>
+  <h2>Content Rating Questionnaire</h2>
+  <p style="color:#555; margin-bottom:16px;">Go to <strong>Play Console → Policy → App content → Content rating → Start questionnaire</strong>. Select category <strong>News</strong> and answer as follows:</p>
+
+  <table>
+    <tr><th>Question</th><th>Answer</th></tr>
+    <tr><td>Violence</td><td class="answer">None</td></tr>
+    <tr><td>Sexual content</td><td class="answer">None</td></tr>
+    <tr><td>Profanity or crude humour</td><td class="answer">None</td></tr>
+    <tr><td>Controlled substances</td><td class="answer">None</td></tr>
+    <tr><td>User-generated content (comments)</td><td class="answer">Yes</td></tr>
+    <tr><td>Location sharing</td><td class="answer">No</td></tr>
+    <tr><td>Target age group</td><td class="answer">18 and above</td></tr>
+  </table>
+
+  <div class="callout callout-green" style="margin-top:16px;">
+    Your rating will come out as <strong>Everyone</strong> or <strong>Teen</strong> — both are perfectly fine for a news app.
+  </div>
+</div>
+
+<!-- PART 5 — STEP BY STEP -->
+<div class="part">
+  <div class="part-label">Part 5</div>
+  <h2>Step-by-Step Upload Instructions</h2>
+
+  <div class="callout" style="margin-bottom:24px;">
+    <strong>Before you start:</strong> You need access to a Google Play Console account. If one hasn't been created yet, register at <strong>play.google.com/console</strong> — there is a one-time $25 registration fee.
+  </div>
+
+  <div class="step">
+    <div class="step-number">1</div>
+    <div class="step-content">
+      <strong>Create the app</strong>
+      <ul>
+        <li>Play Console → All apps → <strong>Create app</strong></li>
+        <li>App name: <code>StartupsIndia</code></li>
+        <li>Default language: <code>English (India) — en-IN</code></li>
+        <li>App or game: <code>App</code></li>
+        <li>Free or paid: <code>Free</code></li>
+        <li>Accept the declarations → <strong>Create app</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">2</div>
+    <div class="step-content">
+      <strong>Fill the store listing</strong>
+      <ul>
+        <li>Left menu → Store presence → <strong>Main store listing</strong></li>
+        <li>Paste app name, short description, full description from Part 1</li>
+        <li>Upload the app icon (512×512 PNG)</li>
+        <li>Upload the feature graphic (1024×512 PNG)</li>
+        <li>Upload at least 2 phone screenshots from Part 2</li>
+        <li>App category: <strong>News &amp; Magazines</strong></li>
+        <li>Fill in contact email and website URL → <strong>Save</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">3</div>
+    <div class="step-content">
+      <strong>Add the privacy policy</strong>
+      <ul>
+        <li>Left menu → Policy → App content → <strong>Privacy Policy</strong></li>
+        <li>Enter URL: <code>startupsindia.in/privacy</code></li>
+        <li>Save</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">4</div>
+    <div class="step-content">
+      <strong>Complete the Data Safety form</strong>
+      <ul>
+        <li>Left menu → Policy → <strong>Data safety</strong></li>
+        <li>Work through each section using the answers from Part 3</li>
+        <li>Save and submit</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">5</div>
+    <div class="step-content">
+      <strong>Complete content rating</strong>
+      <ul>
+        <li>Left menu → Policy → App content → <strong>Content rating</strong></li>
+        <li>Start questionnaire → Category: <strong>News</strong></li>
+        <li>Answer using Part 4 above → Submit</li>
+        <li>Rating is generated automatically — no further action needed</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">6</div>
+    <div class="step-content">
+      <strong>Set target audience</strong>
+      <ul>
+        <li>Left menu → Policy → App content → <strong>Target audience</strong></li>
+        <li>Select: <strong>18 and above</strong></li>
+        <li>Save</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">7</div>
+    <div class="step-content">
+      <strong>Upload the AAB</strong>
+      <ul>
+        <li>Left menu → Release → <strong>Production</strong> → Create new release</li>
+        <li>Under "App integrity" — when Google asks about Play App Signing, click <strong>"Use Google Play's app signing key"</strong> and accept. This is mandatory and completely normal.</li>
+        <li>Upload the <code>.aab</code> file provided by the development team</li>
+        <li>Release name: <code>1.0.0</code></li>
+        <li>Release notes: <code>Initial release of StartupsIndia</code></li>
+        <li>Save → Review release</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-number">8</div>
+    <div class="step-content">
+      <strong>Send for review</strong>
+      <ul>
+        <li>Fix any items marked as <strong>Errors</strong> (Warnings can be skipped for now)</li>
+        <li>Click <strong>"Start rollout to Production"</strong> → Rollout</li>
+        <li>Google review typically takes <strong>1–3 business days</strong> for a new app</li>
+        <li>You will receive an email when approved or if any changes are needed</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout callout-green" style="margin-top:8px;">
+    <strong>If Google rejects the app</strong> — they will give a specific reason in Play Console and via email. Forward the rejection message to the development team and it will be resolved promptly.
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="margin-top:48px; padding-top:20px; border-top:2px solid #f0f0f0; text-align:center; color:#aaa; font-size:11px;">
+  StartupsIndia &nbsp;·&nbsp; Play Store Upload Guide &nbsp;·&nbsp; May 2026 &nbsp;·&nbsp; For client use only
+</div>
+
+</body>
+</html>
