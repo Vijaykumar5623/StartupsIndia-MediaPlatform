@@ -20,9 +20,41 @@
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-3.9.2-0175C2?logo=dart&logoColor=white)
 ![Firebase](https://img.shields.io/badge/Firebase-Auth%20%7C%20Firestore%20%7C%20FCM-FFCA28?logo=firebase&logoColor=black)
-![License](https://img.shields.io/badge/License-MIT-green)
+![Status](https://img.shields.io/badge/status-pre--launch%20v1.0.0-E8341C)
+![License](https://img.shields.io/badge/License-Proprietary-lightgrey)
 
 </div>
+
+---
+
+## Status
+
+**Pre-launch — v1.0.0 preparation.** The app is feature-complete for its first
+release and is being stabilized, documented, and prepared for the Google Play
+Store. Current focus: documentation, launch hardening, and store paperwork.
+
+- Version: `1.0.0+1` (see [pubspec.yaml](pubspec.yaml))
+- Platform: Flutter **Android** app (iOS scaffolding exists but is not a launch target)
+- Launch readiness: see [PLAY_STORE_AUDIT.md](PLAY_STORE_AUDIT.md) and [docs/play-store-launch-checklist.md](docs/play-store-launch-checklist.md)
+
+## Documentation
+
+Start with the [documentation index](docs/README.md). Highlights:
+
+| Doc | What it covers |
+|---|---|
+| [docs/APP_STATE.md](docs/APP_STATE.md) | Current product behavior and user flows |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Structure, routing, state, repositories |
+| [docs/DATA_CONTRACTS.md](docs/DATA_CONTRACTS.md) | Firestore collections and model fields |
+| [docs/setup.md](docs/setup.md) | New-developer environment setup |
+| [docs/development-guide.md](docs/development-guide.md) | How to work on the app |
+| [docs/vibe-coding-guide.md](docs/vibe-coding-guide.md) | Using AI agents safely on this repo |
+| [docs/release-plan.md](docs/release-plan.md) | Versioning and release workflow |
+| [docs/play-store-launch-checklist.md](docs/play-store-launch-checklist.md) | Everything needed before submission |
+| [docs/roadmap.md](docs/roadmap.md) | Planned releases and timeline |
+| [docs/handover-notes.md](docs/handover-notes.md) | Company handover and ownership |
+
+Contributors: read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) first.
 
 ---
 
@@ -246,21 +278,33 @@ flutter_local_notifications: ^17.0.0
 
 ---
 
+## Security
+
+Never commit secrets. `google-services.json`, signing keystores, and service
+account keys are gitignored and must be provisioned outside the repo. See
+[SECURITY.md](SECURITY.md) for the full policy and current open items.
+
+---
+
 ## Contributing
 
-Pull requests are welcome! For major changes, please open an issue first.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, branch naming, commit style,
+and the pre-PR checklist. If you use an AI agent on this repo, first read the
+[Vibe Coding Guide](docs/vibe-coding-guide.md).
 
-1. Fork the repo
-2. Create your feature branch: `git checkout -b feat/amazing-feature`
-3. Commit your changes: `git commit -m 'feat: add amazing feature'`
-4. Push: `git push origin feat/amazing-feature`
-5. Open a Pull Request
+1. Create a feature branch: `git checkout -b feat/amazing-feature`
+2. Make a small, scoped change and run `flutter analyze`
+3. Commit (Conventional Commits): `git commit -m 'feat: add amazing feature'`
+4. Push and open a Pull Request
 
 ---
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Proprietary — © 2026 Startups India. All rights reserved. See [LICENSE](LICENSE).
+
+> Note: this app is company-owned and not open source. The MIT reference in
+> earlier drafts was incorrect. **TODO: confirm final license with the company.**
 
 ---
 
