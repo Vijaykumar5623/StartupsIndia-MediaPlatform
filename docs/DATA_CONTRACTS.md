@@ -49,6 +49,42 @@ Role details are stored as a flexible map. Current app field keys include:
 - College: `collegeName`, `collegeType`, `cityState`, `contactPersonName`, `designation`, `numberOfStudents`, `interestedIn`
 - Startup enthusiast: `interestArea`, `lookingFor`
 
+Values are stored as plain strings. Many keys are entered through dropdowns in
+the fill/edit profile screens (single source of truth:
+`core/config/profile_field_options.dart`), but the stored value is still just
+the selected/typed string.
+
+Fixed dropdowns (no free text):
+
+- `year` — `1st Year`…`4th Year`, `Graduated` (student)
+- `startupStage` — Idea, MVP, Early Revenue, Growth/Scaling, Profitable (founder)
+- `teamSize` — Solo, 2–5, 6–10, 11–25, 26–50, 50+ (founder)
+- `yearsExperience` — 0–2, 3–5, 6–10, 11–15, 16+ (mentor)
+- `availability` — Free, Paid, Group sessions (mentor)
+- `investorType` — Angel, VC, Micro VC, Family Office, Syndicate, Corporate
+- `investmentRange` — <₹10L, ₹10L–50L, ₹50L–1Cr, ₹1Cr–5Cr, ₹5Cr+ (investor)
+- `preferredStage` — Pre-Seed, Seed, Series A, Series B+, Growth (investor)
+- `collegeType` — Engineering, Management, University, Arts & Science, Medical,
+  Polytechnic (college)
+- `numberOfStudents` — <500, 500–1K, 1K–5K, 5K–10K, 10K+ (college)
+
+Dropdown + "Other" free-text option:
+
+- `branch` — CSE, IT, AIML, Data Science, Mechanical, Civil, EEE, ECE (student)
+- `degreeCourse` — common Indian degrees (student)
+- `lookingFor` — Internship, Co-founder, Networking, Learning, Job (student /
+  startup enthusiast)
+- `businessNeeds` — Funding, Mentors, Hiring, Co-founder, Partnerships (founder)
+- `designation` — Placement Officer, Dean, Director, Professor, HoD, Incubation
+  Manager (college)
+- `location` / `startupLocation` / `cityState` — Indian states & union
+  territories (shared About-section location, founder, college)
+
+Fields saved before a key became a dropdown (or values entered via "Other")
+are preserved as-is and shown as custom entries. Note: `teamSize`,
+`yearsExperience`, and `numberOfStudents` now store range labels (e.g. `2–5`)
+rather than raw numbers.
+
 ## users/{uid}/communities/{communityId}
 
 Membership index for the user's joined communities.

@@ -67,6 +67,22 @@ It also collects role-specific fields and stores them as
 requirements file and should be treated as client-approved behavior, not copied
 verbatim from the private file.
 
+Many role-specific fields are entered through dropdowns rather than free text,
+defined once in `core/config/profile_field_options.dart` and shared by both the
+fill-profile and edit-profile screens via the `AppDropdownField` widget. Because
+both screens resolve every field through `profileDropdownFor(key)`, adding a key
+to that config turns the field into a dropdown in both places automatically.
+
+Fixed dropdowns (no free text): student `year`; founder `startupStage`,
+`teamSize`; mentor `yearsExperience`, `availability`; investor `investorType`,
+`investmentRange`, `preferredStage`; college `collegeType`, `numberOfStudents`.
+
+Dropdown + "Other" (free-text) option: student `branch`, `degreeCourse`,
+`lookingFor`; founder `businessNeeds`; college `designation`; and every location
+field (`location`, `startupLocation`, `cityState`) which offers Indian states/UTs
+plus "Other". Selecting a preset stores its label; "Other" stores the typed
+value; existing values outside the preset list load as "Other" custom entries.
+
 Username uniqueness is checked by querying `users.usernameLower`.
 Profile handle display prefers `users.username` and falls back to the email
 prefix only for older/incomplete profiles without a saved username.
@@ -204,6 +220,9 @@ Edit profile:
 - location field shared across all roles
 - role-specific section shows role-appropriate detail fields (student college
   info, founder startup info, mentor expertise, etc.)
+- dropdown-backed role fields (and the shared location field) use the same
+  shared `AppDropdownField` + `profile_field_options.dart` as fill-profile; an
+  existing value outside the preset list loads as an "Other" custom entry
 - role cannot be changed after sign-up (locked banner shown in edit form)
 
 Profile images upload to Cloudinary via `FirestoreRepository.uploadImage`;

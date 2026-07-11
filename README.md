@@ -105,7 +105,7 @@ Contributors: read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY
 - Edit profile with role-specific fields
 - Dark mode (persisted), notification preferences (persisted)
 - Help & Support, Privacy Policy, Terms of Service
-- About screen with social links and Made with Flutter badge
+- About screen with social links
 
 ### CI / CD
 - GitHub Actions workflow on every push

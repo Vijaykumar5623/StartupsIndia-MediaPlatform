@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../theme/style_guide.dart';
+import '../../../../core/config/profile_field_options.dart';
 import '../../../../core/presentation/widgets/app_text_field.dart';
+import '../../../../core/presentation/widgets/app_dropdown_field.dart';
 import '../../../../core/repository/firestore_repository.dart';
 import '../../../../core/utils/app_error_reporter.dart';
 import '../../../../core/utils/phone_number_validator.dart';
@@ -669,15 +671,28 @@ class _RoleDetailsSection extends StatelessWidget {
       isDark: isDark,
       children: [
         for (var i = 0; i < fields.length; i++) ...[
-          AppTextField(
-            controller: controllerFor(fields[i].key),
-            label: fields[i].label,
-            hintText: fields[i].hint,
-            keyboardType: fields[i].keyboardType,
-          ),
+          _buildField(fields[i], controllerFor(fields[i].key)),
           if (i != fields.length - 1) const SizedBox(height: 14),
         ],
       ],
+    );
+  }
+
+  Widget _buildField(_RoleField field, TextEditingController controller) {
+    final dropdown = profileDropdownFor(field.key);
+    if (dropdown != null) {
+      return AppDropdownField(
+        controller: controller,
+        label: field.label,
+        options: dropdown.options,
+        allowOther: dropdown.allowOther,
+      );
+    }
+    return AppTextField(
+      controller: controller,
+      label: field.label,
+      hintText: field.hint,
+      keyboardType: field.keyboardType,
     );
   }
 }

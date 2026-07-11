@@ -6,7 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/repository/firestore_repository.dart';
 import '../../../auth/domain/models/user_model.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../core/config/profile_field_options.dart';
 import '../../../../core/presentation/widgets/app_text_field.dart';
+import '../../../../core/presentation/widgets/app_dropdown_field.dart';
 import '../../../../theme/style_guide.dart';
 import '../../../../core/utils/app_error_reporter.dart';
 import '../../../../core/utils/phone_number_validator.dart';
@@ -210,12 +212,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 isDark: isDark,
                               ),
                               const SizedBox(height: 14),
-                              AppTextField(
-                                controller: _locationController,
-                                label: 'Location',
-                                hintText: 'e.g. Bangalore, India',
-                                keyboardType: TextInputType.streetAddress,
-                              ),
+                              _buildLocationField(),
                               const SizedBox(height: 14),
                               AppTextField(
                                 controller: _websiteController,
@@ -592,14 +589,49 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       children: [
         for (var i = 0; i < fields.length; i++) ...[
           if (i > 0) const SizedBox(height: 14),
-          AppTextField(
-            controller:
-                _roleDetailControllers[fields[i].$1] ?? TextEditingController(),
-            label: fields[i].$2,
-            hintText: fields[i].$3,
-          ),
+          _buildRoleField(fields[i]),
         ],
       ],
+    );
+  }
+
+  Widget _buildRoleField((String, String, String) field) {
+    final (key, label, hint) = field;
+    final controller =
+        _roleDetailControllers[key] ?? TextEditingController();
+    final dropdown = profileDropdownFor(key);
+    if (dropdown != null) {
+      return AppDropdownField(
+        controller: controller,
+        label: label,
+        options: dropdown.options,
+        allowOther: dropdown.allowOther,
+      );
+    }
+    return AppTextField(
+      controller: controller,
+      label: label,
+      hintText: hint,
+    );
+  }
+
+  // Shared location field (not a role-specific field). Uses the same shared
+  // dropdown config keyed by `location`.
+  Widget _buildLocationField() {
+    final dropdown = profileDropdownFor('location');
+    if (dropdown != null) {
+      return AppDropdownField(
+        controller: _locationController,
+        label: 'Location',
+        options: dropdown.options,
+        allowOther: dropdown.allowOther,
+      );
+    }
+    return AppTextField(
+      controller: _locationController,
+      label: 'Location',
+      hintText: 'e.g. Bangalore, India',
+      keyboardType: TextInputType.streetAddress,
     );
   }
 
