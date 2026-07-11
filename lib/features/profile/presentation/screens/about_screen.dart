@@ -28,8 +28,6 @@ class AboutScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     _buildLinksCard(isDark),
                     const SizedBox(height: 24),
-                    _buildTechCard(isDark),
-                    const SizedBox(height: 24),
                     _buildFooter(isDark),
                   ],
                 ),
@@ -192,22 +190,6 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTechCard(bool isDark) {
-    return _Card(
-      isDark: isDark,
-      label: 'Built With',
-      children: [
-        _TechRow(isDark: isDark, label: 'Framework', value: 'Flutter 3.x'),
-        _Divider(isDark: isDark),
-        _TechRow(isDark: isDark, label: 'Backend', value: 'Firebase'),
-        _Divider(isDark: isDark),
-        _TechRow(isDark: isDark, label: 'State Management', value: 'Riverpod'),
-        _Divider(isDark: isDark),
-        _MadeWithFlutter(isDark: isDark),
-      ],
-    );
-  }
-
   Widget _buildFooter(bool isDark) {
     return Text(
       '© 2026 StartupsIndia. All rights reserved.',
@@ -325,106 +307,6 @@ class _LinkRow extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _TechRow extends StatelessWidget {
-  final bool isDark;
-  final String label;
-  final String value;
-
-  const _TechRow({
-    required this.isDark,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: AppTypography.textSmall.copyWith(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.grayscaleBodyText,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: AppTypography.textSmall.copyWith(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.grayscaleTitleActive,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MadeWithFlutter extends StatelessWidget {
-  final bool isDark;
-  const _MadeWithFlutter({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      child: Row(
-        children: [
-          Text(
-            'Made with',
-            style: AppTypography.textSmall.copyWith(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.grayscaleBodyText,
-            ),
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF54C5F8).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: const Color(0xFF54C5F8).withValues(alpha: 0.35),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.flutter_dash,
-                  color: Color(0xFF54C5F8),
-                  size: 16,
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  'Flutter',
-                  style: AppTypography.textSmall.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF54C5F8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
