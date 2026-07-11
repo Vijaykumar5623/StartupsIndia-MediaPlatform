@@ -85,9 +85,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       ('portfolioCompanies', 'Portfolio Companies', 'e.g. Zepto, Razorpay'),
     ],
     'college': [
-      ('collegeName', 'College Name', 'e.g. Anna University'),
-      ('collegeType', 'College Type', 'e.g. Engineering, Management'),
       ('cityState', 'City / State', 'e.g. Chennai, Tamil Nadu'),
+      ('collegeName', 'College Name', 'Search your college'),
+      ('collegeType', 'College Type', 'e.g. Engineering, Management'),
       ('contactPersonName', 'Contact Person', 'e.g. Dr. Ramesh Kumar'),
       ('designation', 'Designation', 'e.g. Dean, Training & Placement Officer'),
       ('numberOfStudents', 'Number of Students', 'e.g. 5000'),
@@ -601,12 +601,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final (key, label, hint) = field;
     final controller =
         _roleDetailControllers[key] ?? TextEditingController();
-    // Students pick their college from the state-filtered Firestore dataset.
-    if (_currentUser?.role == 'student' && key == 'collegeName') {
+    // Student and college roles pick a college from the state-filtered
+    // Firestore dataset. Each role's state lives under a different key.
+    final role = _currentUser?.role;
+    if (key == 'collegeName' && (role == 'student' || role == 'college')) {
+      final stateKey = role == 'college' ? 'cityState' : 'state';
       return CollegeSearchField(
         controller: controller,
         stateController:
-            _roleDetailControllers['state'] ?? TextEditingController(),
+            _roleDetailControllers[stateKey] ?? TextEditingController(),
         label: label,
       );
     }

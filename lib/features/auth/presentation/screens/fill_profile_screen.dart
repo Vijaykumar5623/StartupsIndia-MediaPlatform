@@ -599,19 +599,19 @@ List<_RoleField> _roleFieldsFor(String role) {
     ],
     'college' => const [
       _RoleField(
+        key: 'cityState',
+        label: 'City / State',
+        hint: 'Bengaluru, Karnataka',
+      ),
+      _RoleField(
         key: 'collegeName',
         label: 'College Name',
-        hint: 'College / institute',
+        hint: 'Search your college',
       ),
       _RoleField(
         key: 'collegeType',
         label: 'College Type',
         hint: 'Engineering, MBA, university',
-      ),
-      _RoleField(
-        key: 'cityState',
-        label: 'City / State',
-        hint: 'Bengaluru, Karnataka',
       ),
       _RoleField(
         key: 'contactPersonName',
@@ -681,11 +681,13 @@ class _RoleDetailsSection extends StatelessWidget {
   }
 
   Widget _buildField(_RoleField field, TextEditingController controller) {
-    // Students pick their college from the state-filtered Firestore dataset.
-    if (role == 'student' && field.key == 'collegeName') {
+    // Student and college roles pick a college from the state-filtered
+    // Firestore dataset. Each role's state lives under a different key.
+    if (field.key == 'collegeName' &&
+        (role == 'student' || role == 'college')) {
       return CollegeSearchField(
         controller: controller,
-        stateController: controllerFor('state'),
+        stateController: controllerFor(role == 'college' ? 'cityState' : 'state'),
         label: field.label,
       );
     }

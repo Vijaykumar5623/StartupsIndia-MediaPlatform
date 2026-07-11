@@ -46,7 +46,7 @@ Role details are stored as a flexible map. Current app field keys include:
 - Founder: `startupName`, `startupStage`, `industry`, `startupDescription`, `businessNeeds`, `startupLocation`, `teamSize`
 - Mentor: `profession`, `company`, `expertise`, `yearsExperience`, `industry`, `mentorshipArea`, `availability`
 - Investor: `investorType`, `firmName`, `investmentRange`, `preferredIndustries`, `preferredStage`, `portfolioCompanies`
-- College: `collegeName`, `collegeType`, `cityState`, `contactPersonName`, `designation`, `numberOfStudents`, `interestedIn`
+- College: `cityState`, `collegeName`, `collegeType`, `contactPersonName`, `designation`, `numberOfStudents`, `interestedIn`
 - Startup enthusiast: `interestArea`, `lookingFor`
 
 Values are stored as plain strings. Many keys are entered through dropdowns in
@@ -83,9 +83,10 @@ Dropdown + "Other" free-text option:
 
 Special field:
 
-- `collegeName` (student only) — entered through a state-filtered searchable
-  picker backed by the `colleges` collection (see below), with an "Other"
-  free-text fallback. Other roles keep `collegeName` as free text.
+- `collegeName` (student & college roles) — entered through a state-filtered
+  searchable picker backed by the `colleges` collection (see below), with an
+  "Other" free-text fallback. The state filter uses the role's own state field:
+  `state` for students, `cityState` for the college role.
 
 Fields saved before a key became a dropdown (or values entered via "Other")
 are preserved as-is and shown as custom entries. Note: `teamSize`,

@@ -77,8 +77,10 @@ The student role also has a `state` dropdown (Indian states/UTs) that drives a
 state-filtered **college picker**: `collegeName` opens a searchable sheet backed
 by the Firestore `colleges` collection (seeded from the AISHE dataset via
 `scripts/seed_colleges.py`) and filtered by the chosen state, with an "Other"
-free-text fallback for colleges not in the dataset. Other roles keep
-`collegeName` as plain text. See `CollegeSearchField` + `CollegeRepository`.
+free-text fallback for colleges not in the dataset. The college institution role
+uses the same picker for its own `collegeName`, filtered by its `cityState`
+field (both roles show the state field above College Name). See
+`CollegeSearchField` + `CollegeRepository`.
 
 Fixed dropdowns (no free text): student `year`; founder `startupStage`,
 `teamSize`; mentor `yearsExperience`, `availability`; investor `investorType`,
