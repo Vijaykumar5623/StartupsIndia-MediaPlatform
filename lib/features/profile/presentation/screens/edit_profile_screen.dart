@@ -9,6 +9,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../core/config/profile_field_options.dart';
 import '../../../../core/presentation/widgets/app_text_field.dart';
 import '../../../../core/presentation/widgets/app_dropdown_field.dart';
+import '../../../../core/presentation/widgets/college_search_field.dart';
 import '../../../../theme/style_guide.dart';
 import '../../../../core/utils/app_error_reporter.dart';
 import '../../../../core/utils/phone_number_validator.dart';
@@ -41,7 +42,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   // Field definitions per role: (key, label, hint)
   static const _roleFields = <String, List<(String, String, String)>>{
     'student': [
-      ('collegeName', 'College Name', 'e.g. IIT Bombay'),
+      ('state', 'State', 'Select your state'),
+      ('collegeName', 'College Name', 'Search your college'),
       ('degreeCourse', 'Degree / Course', 'e.g. B.Tech Computer Science'),
       ('year', 'Year', 'e.g. 2nd Year'),
       ('branch', 'Branch / Specialization', 'e.g. Artificial Intelligence'),
@@ -599,6 +601,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final (key, label, hint) = field;
     final controller =
         _roleDetailControllers[key] ?? TextEditingController();
+    // Students pick their college from the state-filtered Firestore dataset.
+    if (_currentUser?.role == 'student' && key == 'collegeName') {
+      return CollegeSearchField(
+        controller: controller,
+        stateController:
+            _roleDetailControllers['state'] ?? TextEditingController(),
+        label: label,
+      );
+    }
     final dropdown = profileDropdownFor(key);
     if (dropdown != null) {
       return AppDropdownField(

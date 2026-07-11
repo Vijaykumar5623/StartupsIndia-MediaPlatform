@@ -42,7 +42,7 @@ Role ids:
 
 Role details are stored as a flexible map. Current app field keys include:
 
-- Student: `collegeName`, `degreeCourse`, `year`, `branch`, `skills`, `lookingFor`
+- Student: `state`, `collegeName`, `degreeCourse`, `year`, `branch`, `skills`, `lookingFor`
 - Founder: `startupName`, `startupStage`, `industry`, `startupDescription`, `businessNeeds`, `startupLocation`, `teamSize`
 - Mentor: `profession`, `company`, `expertise`, `yearsExperience`, `industry`, `mentorshipArea`, `availability`
 - Investor: `investorType`, `firmName`, `investmentRange`, `preferredIndustries`, `preferredStage`, `portfolioCompanies`
@@ -77,13 +77,39 @@ Dropdown + "Other" free-text option:
 - `businessNeeds` — Funding, Mentors, Hiring, Co-founder, Partnerships (founder)
 - `designation` — Placement Officer, Dean, Director, Professor, HoD, Incubation
   Manager (college)
-- `location` / `startupLocation` / `cityState` — Indian states & union
-  territories (shared About-section location, founder, college)
+- `state` / `location` / `startupLocation` / `cityState` — Indian states &
+  union territories (student college state, shared About-section location,
+  founder, college)
+
+Special field:
+
+- `collegeName` (student only) — entered through a state-filtered searchable
+  picker backed by the `colleges` collection (see below), with an "Other"
+  free-text fallback. Other roles keep `collegeName` as free text.
 
 Fields saved before a key became a dropdown (or values entered via "Other")
 are preserved as-is and shown as custom entries. Note: `teamSize`,
 `yearsExperience`, and `numberOfStudents` now store range labels (e.g. `2–5`)
 rather than raw numbers.
+
+## colleges/{collegeId}
+
+Read-only reference data seeded from the government AISHE dataset
+(`scripts/seed_colleges.py`). Powers the student college picker, which queries
+by state with a prefix search on `nameLower`.
+
+Fields:
+
+- `name`: string — display name
+- `nameLower`: string — lowercased name, used for ordering + prefix search
+- `state`: string — canonical Indian state/UT label (matches the app's state
+  dropdown, so the picker's `where(state ==)` filter works)
+- `city`: string — city/town (display only), may be empty
+
+Access: public read (works during onboarding, before auth); writes are
+admin/seed-tooling only. Requires the composite index (`state` ASC, `nameLower`
+ASC) declared in `firestore.indexes.json`. Doc ids are a hash of `name+state`,
+so re-seeding is idempotent.
 
 ## users/{uid}/communities/{communityId}
 

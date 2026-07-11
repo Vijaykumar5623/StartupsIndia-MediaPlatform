@@ -73,6 +73,13 @@ fill-profile and edit-profile screens via the `AppDropdownField` widget. Because
 both screens resolve every field through `profileDropdownFor(key)`, adding a key
 to that config turns the field into a dropdown in both places automatically.
 
+The student role also has a `state` dropdown (Indian states/UTs) that drives a
+state-filtered **college picker**: `collegeName` opens a searchable sheet backed
+by the Firestore `colleges` collection (seeded from the AISHE dataset via
+`scripts/seed_colleges.py`) and filtered by the chosen state, with an "Other"
+free-text fallback for colleges not in the dataset. Other roles keep
+`collegeName` as plain text. See `CollegeSearchField` + `CollegeRepository`.
+
 Fixed dropdowns (no free text): student `year`; founder `startupStage`,
 `teamSize`; mentor `yearsExperience`, `availability`; investor `investorType`,
 `investmentRange`, `preferredStage`; college `collegeType`, `numberOfStudents`.

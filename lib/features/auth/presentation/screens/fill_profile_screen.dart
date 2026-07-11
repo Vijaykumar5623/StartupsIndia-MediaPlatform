@@ -7,6 +7,7 @@ import '../../../../theme/style_guide.dart';
 import '../../../../core/config/profile_field_options.dart';
 import '../../../../core/presentation/widgets/app_text_field.dart';
 import '../../../../core/presentation/widgets/app_dropdown_field.dart';
+import '../../../../core/presentation/widgets/college_search_field.dart';
 import '../../../../core/repository/firestore_repository.dart';
 import '../../../../core/utils/app_error_reporter.dart';
 import '../../../../core/utils/phone_number_validator.dart';
@@ -476,10 +477,11 @@ class _RoleField {
 List<_RoleField> _roleFieldsFor(String role) {
   return switch (role) {
     'student' => const [
+      _RoleField(key: 'state', label: 'State', hint: 'Select your state'),
       _RoleField(
         key: 'collegeName',
         label: 'College Name',
-        hint: 'Your college',
+        hint: 'Search your college',
       ),
       _RoleField(
         key: 'degreeCourse',
@@ -679,6 +681,14 @@ class _RoleDetailsSection extends StatelessWidget {
   }
 
   Widget _buildField(_RoleField field, TextEditingController controller) {
+    // Students pick their college from the state-filtered Firestore dataset.
+    if (role == 'student' && field.key == 'collegeName') {
+      return CollegeSearchField(
+        controller: controller,
+        stateController: controllerFor('state'),
+        label: field.label,
+      );
+    }
     final dropdown = profileDropdownFor(field.key);
     if (dropdown != null) {
       return AppDropdownField(

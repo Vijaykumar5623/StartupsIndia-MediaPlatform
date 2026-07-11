@@ -209,6 +209,8 @@ const Map<String, ProfileDropdown> _dropdowns = {
   'numberOfStudents': ProfileDropdown(_numberOfStudents, allowOther: false),
   'designation': ProfileDropdown(_designation),
   'cityState': ProfileDropdown(_indianStates),
+  // Student state — drives the state-filtered college picker.
+  'state': ProfileDropdown(_indianStates),
   // Shared location field (edit profile "About" section)
   'location': ProfileDropdown(_indianStates),
 };

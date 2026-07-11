@@ -108,6 +108,7 @@ Feature repositories:
 - `PostRepository` handles media posts, post likes/bookmarks/shares, post comments, article comments.
 - `FirebaseNotificationRepositoryImpl` handles per-user notifications and FCM token persistence.
 - `LeaderboardRepository` and `ReportRepository` support home/profile-related surfaces.
+- `CollegeRepository` provides read-only, state-filtered prefix search over the `colleges` reference collection (AISHE dataset seeded via `scripts/seed_colleges.py`), used by the student college picker.
 
 The codebase is not strict-clean architecture. Some UI code directly imports
 Firebase or feature repositories where pragmatic.
