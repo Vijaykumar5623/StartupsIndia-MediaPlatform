@@ -136,6 +136,28 @@ Profile photo storage:
   `FirestoreRepository.uploadImage`.
 - The final URL is stored in `users/{uid}.avatarUrl`.
 
+## Sign-in Methods (linked accounts)
+
+Settings → Account → **Sign-in Methods** (`/sign-in-methods`,
+`SignInMethodsScreen`) lets a signed-in user connect more than one way to log
+into the **same** account:
+
+- **Email & Password** and **Google** are shown with a connected/not-connected
+  state. A user who signed up with email can **Connect** Google; a user who
+  signed up with Google can **Add** a password (sets email+password login for
+  their account email). Either method then signs into the same account.
+- **Remove** unlinks a method, guarded so at least one always remains.
+- Backed by `AuthRepository.linkGoogle` / `linkEmailPassword` /
+  `unlinkProvider` / `linkedProviderIds` (Firebase `linkWithCredential` /
+  `unlink`). Errors like `credential-already-in-use` (that Google/email already
+  belongs to another account) and `requires-recent-login` are surfaced as
+  snackbars.
+
+Note: this is Firebase's native provider-linking, so it covers Google (one) plus
+email/password — not arbitrary multiple email addresses. True multi-email login
+(any of N emails → one account) would require a Cloud Function minting custom
+tokens (Blaze plan); that was intentionally deferred.
+
 ## Main App Tabs
 
 `MainAppScaffold` owns the bottom nav with an `IndexedStack`.

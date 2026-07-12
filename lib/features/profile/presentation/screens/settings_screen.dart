@@ -75,6 +75,15 @@ class SettingsScreen extends ConsumerWidget {
                   _RowDivider(isDark: isDark),
                   _SettingsRow(
                     isDark: isDark,
+                    icon: Icons.link_rounded,
+                    iconColor: const Color(0xFF00897B),
+                    label: 'Sign-in Methods',
+                    onTap: () =>
+                        Navigator.pushNamed(context, '/sign-in-methods'),
+                  ),
+                  _RowDivider(isDark: isDark),
+                  _SettingsRow(
+                    isDark: isDark,
                     icon: Icons.delete_outline_rounded,
                     iconColor: const Color(0xFFEF4444),
                     label: 'Delete Account',

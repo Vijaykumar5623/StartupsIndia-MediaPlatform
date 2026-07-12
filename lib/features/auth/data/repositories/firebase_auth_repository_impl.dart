@@ -61,26 +61,68 @@ class FirebaseAuthRepositoryImpl implements AuthRepository {
     // Web: Google Sign-In via popup (Firebase Auth native web flow).
     // This avoids the google_sign_in package entirely on web — more reliable.
     if (kIsWeb) {
-      final googleProvider = GoogleAuthProvider();
-      // Add scopes as needed
-      googleProvider.addScope('email');
-      googleProvider.addScope('profile');
-      return _auth.signInWithPopup(googleProvider);
+      return _auth.signInWithPopup(_webGoogleProvider());
     }
 
-    // Mobile (Android / iOS):
-    // google_sign_in v7.0.0+ uses authenticate() instead of signIn()
-    if (_googleSignIn == null) return null;
-
-    final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
-
-    final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-
-    final AuthCredential credential = GoogleAuthProvider.credential(
-      idToken: googleAuth.idToken,
-    );
-
+    final credential = await _mobileGoogleCredential();
+    if (credential == null) return null;
     return _auth.signInWithCredential(credential);
+  }
+
+  GoogleAuthProvider _webGoogleProvider() {
+    final provider = GoogleAuthProvider();
+    provider.addScope('email');
+    provider.addScope('profile');
+    return provider;
+  }
+
+  // Mobile (Android / iOS): google_sign_in v7.0.0+ uses authenticate().
+  // Returns null when Google Sign-In isn't available (e.g. web fallback).
+  Future<AuthCredential?> _mobileGoogleCredential() async {
+    if (_googleSignIn == null) return null;
+    final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
+    final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+    return GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+  }
+
+  // ── Linked sign-in methods ─────────────────────────────────────────────────
+
+  @override
+  List<String> get linkedProviderIds =>
+      _auth.currentUser?.providerData.map((p) => p.providerId).toList() ??
+      const [];
+
+  @override
+  Future<UserCredential?> linkGoogle() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    if (kIsWeb) {
+      return user.linkWithPopup(_webGoogleProvider());
+    }
+    final credential = await _mobileGoogleCredential();
+    if (credential == null) return null;
+    return user.linkWithCredential(credential);
+  }
+
+  @override
+  Future<void> linkEmailPassword({
+    required String email,
+    required String password,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    final credential = EmailAuthProvider.credential(
+      email: email.trim(),
+      password: password,
+    );
+    await user.linkWithCredential(credential);
+  }
+
+  @override
+  Future<void> unlinkProvider(String providerId) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    await user.unlink(providerId);
   }
 
   // ── Sign Out ──────────────────────────────────────────────────────────────

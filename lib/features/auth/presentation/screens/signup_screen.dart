@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/theme_service_provider.dart';
 import '../../../../core/utils/app_urls.dart';
+import '../../../../core/utils/password_validator.dart';
 import '../../../../theme/style_guide.dart';
 import '../../../../core/presentation/widgets/app_text_field.dart';
 import '../../../notifications/data/welcome_notifications.dart';
@@ -47,18 +48,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     return null;
   }
 
-  String? _validatePassword(String? val) {
-    if (val == null || val.isEmpty) return 'Password is required.';
-    if (val.length < 8) return 'Must be at least 8 characters.';
-    if (!RegExp(r'[A-Z]').hasMatch(val)) {
-      return 'Must contain an uppercase letter.';
-    }
-    if (!RegExp(r'[0-9]').hasMatch(val)) return 'Must contain a number.';
-    if (!RegExp(r'[@#\$%^&*!?]').hasMatch(val)) {
-      return 'Must contain a special character.';
-    }
-    return null;
-  }
+  String? _validatePassword(String? val) => validateStrongPassword(val);
 
   String? _validateConfirmPassword(String? val) {
     if (val == null || val.isEmpty) return 'Please confirm your password.';

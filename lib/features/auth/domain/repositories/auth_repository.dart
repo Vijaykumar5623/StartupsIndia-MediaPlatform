@@ -28,6 +28,25 @@ abstract class AuthRepository {
   /// Returns null if the user cancels the flow.
   Future<UserCredential?> signInWithGoogle();
 
+  /// Provider ids linked to the current account (e.g. `password`, `google.com`).
+  List<String> get linkedProviderIds;
+
+  /// Link a Google account to the current account as an alternate login.
+  /// Returns null if the user cancels. Throws [FirebaseAuthException]
+  /// (e.g. `credential-already-in-use`, `provider-already-linked`).
+  Future<UserCredential?> linkGoogle();
+
+  /// Link an email/password credential to the current account, so the user can
+  /// also sign in with email + password. Throws [FirebaseAuthException].
+  Future<void> linkEmailPassword({
+    required String email,
+    required String password,
+  });
+
+  /// Unlink a provider from the current account. The caller must ensure at
+  /// least one sign-in method remains. Throws [FirebaseAuthException].
+  Future<void> unlinkProvider(String providerId);
+
   /// Sign out from Firebase (and Google if applicable).
   Future<void> signOut();
 
