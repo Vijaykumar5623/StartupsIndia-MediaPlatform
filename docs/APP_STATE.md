@@ -91,6 +91,14 @@ It also collects role-specific fields and stores them as
 requirements file and should be treated as client-approved behavior, not copied
 verbatim from the private file.
 
+Role field definitions (per-role ordered list of key, form label, hint, and
+short display label) live in a single source of truth,
+`core/config/profile_role_fields.dart` (`roleFieldsFor(role)` /
+`roleSectionLabel(role)`). It is consumed by the Fill Profile form, the Edit
+Profile form, the profile display rows, and profile completion, so those can no
+longer drift. Whether a given field renders as a dropdown is still resolved
+separately by `profileDropdownFor(key)` in `profile_field_options.dart`.
+
 Many role-specific fields are entered through dropdowns rather than free text,
 defined once in `core/config/profile_field_options.dart` and shared by both the
 fill-profile and edit-profile screens via the `AppDropdownField` widget. Because
@@ -230,6 +238,13 @@ Personal profile shows:
 - identity: avatar, full name, handle, role pill, bio, interests chips
 - meta row: location (from `roleDetails.location`), joined date (from Firebase
   Auth `metadata.creationTime`), website link
+- a **profile completion** card with a progress bar and percentage (shown only
+  for a signed-in user). Completion is computed by
+  `core/config/profile_completion.dart` over the optional, editable fields
+  (full name, phone, avatar, bio, website, location, and the role-specific
+  detail keys — mandatory username/email are excluded). Below 100% it shows a
+  "Finish setting up" link to Edit Profile; at 100% it shows a "Profile
+  complete" state. The bar refreshes when returning from Edit Profile.
 - StartupsIndia Pro upgrade banner
 - four tabs: Overview | Activity | Groups | Bookmarks
 

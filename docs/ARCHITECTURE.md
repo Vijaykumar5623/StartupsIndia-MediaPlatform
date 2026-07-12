@@ -108,6 +108,7 @@ Feature repositories:
 - `PostRepository` handles media posts, post likes/bookmarks/shares, post comments, article comments.
 - `FirebaseNotificationRepositoryImpl` handles per-user notifications and FCM token persistence.
 - `LeaderboardRepository` and `ReportRepository` support home/profile-related surfaces.
+- Role-specific profile fields have one source of truth: `core/config/profile_role_fields.dart` (`roleFieldsFor` / `roleSectionLabel`), shared by the fill/edit forms, profile display, and profile completion. Dropdown behaviour per field is resolved by `core/config/profile_field_options.dart`.
 - `CollegeRepository` loads a bundled asset (`assets/data/colleges_in.json`, built from the AISHE dataset via `scripts/build_colleges_asset.py`) and does in-memory, state-filtered substring search for the student/college college picker. No Firestore involved — fully offline.
 
 The codebase is not strict-clean architecture. Some UI code directly imports

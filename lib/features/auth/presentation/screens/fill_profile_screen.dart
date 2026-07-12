@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../theme/style_guide.dart';
 import '../../../../core/config/profile_field_options.dart';
+import '../../../../core/config/profile_role_fields.dart';
 import '../../../../core/presentation/widgets/app_text_field.dart';
 import '../../../../core/presentation/widgets/app_dropdown_field.dart';
 import '../../../../core/presentation/widgets/college_search_field.dart';
@@ -88,7 +89,7 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
 
   Map<String, dynamic> _collectRoleDetails(String role) {
     final details = <String, dynamic>{};
-    for (final field in _roleFieldsFor(role)) {
+    for (final field in roleFieldsFor(role)) {
       final value = _roleController(field.key).text.trim();
       if (value.isNotEmpty) details[field.key] = value;
     }
@@ -494,196 +495,6 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
   }
 }
 
-class _RoleField {
-  final String key;
-  final String label;
-  final String hint;
-  final TextInputType keyboardType;
-
-  const _RoleField({
-    required this.key,
-    required this.label,
-    required this.hint,
-    this.keyboardType = TextInputType.text,
-  });
-}
-
-List<_RoleField> _roleFieldsFor(String role) {
-  return switch (role) {
-    'student' => const [
-      _RoleField(key: 'state', label: 'State', hint: 'Select your state'),
-      _RoleField(
-        key: 'collegeName',
-        label: 'College Name',
-        hint: 'Search your college',
-      ),
-      _RoleField(
-        key: 'degreeCourse',
-        label: 'Degree / Course',
-        hint: 'B.Tech, BBA, MBA',
-      ),
-      _RoleField(key: 'year', label: 'Year', hint: '1st, 2nd, 3rd, Final'),
-      _RoleField(
-        key: 'branch',
-        label: 'Branch / Specialization',
-        hint: 'Computer Science',
-      ),
-      _RoleField(key: 'skills', label: 'Skills', hint: 'Design, Flutter, AI'),
-      _RoleField(
-        key: 'lookingFor',
-        label: 'Looking For',
-        hint: 'Internship, co-founder, learning',
-      ),
-    ],
-    'founder' => const [
-      _RoleField(
-        key: 'startupName',
-        label: 'Startup Name',
-        hint: 'Your startup',
-      ),
-      _RoleField(
-        key: 'startupStage',
-        label: 'Startup Stage',
-        hint: 'Idea, MVP, Revenue, Scaling',
-      ),
-      _RoleField(key: 'industry', label: 'Industry', hint: 'Fintech, SaaS, AI'),
-      _RoleField(
-        key: 'startupDescription',
-        label: 'Startup Description',
-        hint: 'What are you building?',
-      ),
-      _RoleField(
-        key: 'businessNeeds',
-        label: 'Looking For',
-        hint: 'Funding, mentors, hiring',
-      ),
-      _RoleField(
-        key: 'startupLocation',
-        label: 'Startup Location',
-        hint: 'City / State',
-      ),
-      _RoleField(
-        key: 'teamSize',
-        label: 'Team Size',
-        hint: '5',
-        keyboardType: TextInputType.number,
-      ),
-    ],
-    'mentor' => const [
-      _RoleField(
-        key: 'profession',
-        label: 'Profession / Designation',
-        hint: 'Product Leader',
-      ),
-      _RoleField(
-        key: 'company',
-        label: 'Company / Organization',
-        hint: 'Company name',
-      ),
-      _RoleField(
-        key: 'expertise',
-        label: 'Expertise',
-        hint: 'Product, GTM, fundraising',
-      ),
-      _RoleField(
-        key: 'yearsExperience',
-        label: 'Years of Experience',
-        hint: '10',
-        keyboardType: TextInputType.number,
-      ),
-      _RoleField(key: 'industry', label: 'Industry', hint: 'SaaS, fintech'),
-      _RoleField(
-        key: 'mentorshipArea',
-        label: 'Mentorship Area',
-        hint: 'Startup, marketing, finance',
-      ),
-      _RoleField(
-        key: 'availability',
-        label: 'Availability',
-        hint: 'Free, paid, group session',
-      ),
-    ],
-    'investor' => const [
-      _RoleField(
-        key: 'investorType',
-        label: 'Investor Type',
-        hint: 'Angel, VC, family office',
-      ),
-      _RoleField(key: 'firmName', label: 'Firm Name', hint: 'Firm / fund name'),
-      _RoleField(
-        key: 'investmentRange',
-        label: 'Investment Range',
-        hint: '10L - 1Cr',
-      ),
-      _RoleField(
-        key: 'preferredIndustries',
-        label: 'Preferred Industries',
-        hint: 'AI, SaaS, consumer',
-      ),
-      _RoleField(
-        key: 'preferredStage',
-        label: 'Preferred Startup Stage',
-        hint: 'Idea, MVP, revenue',
-      ),
-      _RoleField(
-        key: 'portfolioCompanies',
-        label: 'Portfolio Companies',
-        hint: 'Optional',
-      ),
-    ],
-    'college' => const [
-      _RoleField(
-        key: 'cityState',
-        label: 'City / State',
-        hint: 'Bengaluru, Karnataka',
-      ),
-      _RoleField(
-        key: 'collegeName',
-        label: 'College Name',
-        hint: 'Search your college',
-      ),
-      _RoleField(
-        key: 'collegeType',
-        label: 'College Type',
-        hint: 'Engineering, MBA, university',
-      ),
-      _RoleField(
-        key: 'contactPersonName',
-        label: 'Contact Person Name',
-        hint: 'Full name',
-      ),
-      _RoleField(
-        key: 'designation',
-        label: 'Designation',
-        hint: 'Placement officer',
-      ),
-      _RoleField(
-        key: 'numberOfStudents',
-        label: 'Number of Students',
-        hint: '1200',
-        keyboardType: TextInputType.number,
-      ),
-      _RoleField(
-        key: 'interestedIn',
-        label: 'Interested In',
-        hint: 'Programs, incubation, events',
-      ),
-    ],
-    _ => const [
-      _RoleField(
-        key: 'interestArea',
-        label: 'Startup Interest Area',
-        hint: 'AI, funding, product, community',
-      ),
-      _RoleField(
-        key: 'lookingFor',
-        label: 'Looking For',
-        hint: 'Learning, networking, events',
-      ),
-    ],
-  };
-}
-
 class _RoleDetailsSection extends StatelessWidget {
   final String role;
   final bool isDark;
@@ -701,13 +512,11 @@ class _RoleDetailsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fields = _roleFieldsFor(role);
+    final fields = roleFieldsFor(role);
     if (fields.isEmpty) return const SizedBox.shrink();
 
     return _FormSection(
-      label: role.isEmpty
-          ? 'Role Details'
-          : '${role.replaceAll('_', ' ')} Details',
+      label: roleSectionLabel(role),
       isDark: isDark,
       skippable: true,
       isSkipped: isSkipped,
@@ -721,9 +530,9 @@ class _RoleDetailsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildField(_RoleField field, TextEditingController controller) {
+  Widget _buildField(RoleField field, TextEditingController controller) {
     // Student and college roles pick a college from the state-filtered
-    // Firestore dataset. Each role's state lives under a different key.
+    // dataset. Each role's state lives under a different key.
     if (field.key == 'collegeName' &&
         (role == 'student' || role == 'college')) {
       return CollegeSearchField(
@@ -745,7 +554,6 @@ class _RoleDetailsSection extends StatelessWidget {
       controller: controller,
       label: field.label,
       hintText: field.hint,
-      keyboardType: field.keyboardType,
     );
   }
 }

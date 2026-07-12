@@ -7,6 +7,7 @@ import '../../../../core/repository/firestore_repository.dart';
 import '../../../auth/domain/models/user_model.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../core/config/profile_field_options.dart';
+import '../../../../core/config/profile_role_fields.dart';
 import '../../../../core/presentation/widgets/app_text_field.dart';
 import '../../../../core/presentation/widgets/app_dropdown_field.dart';
 import '../../../../core/presentation/widgets/college_search_field.dart';
@@ -39,75 +40,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   UserModel? _currentUser;
   bool _isSubmitting = false;
 
-  // Field definitions per role: (key, label, hint)
-  static const _roleFields = <String, List<(String, String, String)>>{
-    'student': [
-      ('state', 'State', 'Select your state'),
-      ('collegeName', 'College Name', 'Search your college'),
-      ('degreeCourse', 'Degree / Course', 'e.g. B.Tech Computer Science'),
-      ('year', 'Year', 'e.g. 2nd Year'),
-      ('branch', 'Branch / Specialization', 'e.g. Artificial Intelligence'),
-      ('skills', 'Skills', 'e.g. Flutter, Python, Machine Learning'),
-      ('lookingFor', 'Looking For', 'e.g. Internship, Co-founder, Networking'),
-    ],
-    'founder': [
-      ('startupName', 'Startup Name', 'e.g. TechVenture India'),
-      ('startupStage', 'Startup Stage', 'e.g. Idea Stage, MVP, Revenue Stage'),
-      ('industry', 'Industry', 'e.g. Fintech, EdTech, HealthTech'),
-      (
-        'startupDescription',
-        'Startup Description',
-        'What problem are you solving?',
-      ),
-      ('startupLocation', 'Location', 'e.g. Bangalore, Karnataka'),
-      ('teamSize', 'Team Size', 'e.g. 5'),
-      ('businessNeeds', 'Looking For', 'e.g. Funding, Mentors, Co-founders'),
-    ],
-    'mentor': [
-      ('profession', 'Profession / Designation', 'e.g. CTO, Founder'),
-      ('company', 'Company / Organization', 'e.g. Google, IIM Ahmedabad'),
-      ('expertise', 'Expertise', 'e.g. Product, Tech, Finance, Marketing'),
-      ('yearsExperience', 'Years of Experience', 'e.g. 10'),
-      ('industry', 'Industry', 'e.g. SaaS, Fintech, Edtech'),
-      ('mentorshipArea', 'Mentorship Areas', 'e.g. Startup, Marketing, Legal'),
-      ('availability', 'Availability', 'e.g. Free, Paid, Group Sessions'),
-    ],
-    'investor': [
-      ('investorType', 'Investor Type', 'e.g. Angel Investor, VC'),
-      ('firmName', 'Firm Name', 'e.g. Accel Partners'),
-      ('investmentRange', 'Investment Range', 'e.g. ₹10L – ₹1Cr'),
-      (
-        'preferredIndustries',
-        'Preferred Industries',
-        'e.g. Fintech, SaaS, D2C',
-      ),
-      ('preferredStage', 'Preferred Stage', 'e.g. Pre-Seed, Seed, Series A'),
-      ('portfolioCompanies', 'Portfolio Companies', 'e.g. Zepto, Razorpay'),
-    ],
-    'college': [
-      ('cityState', 'City / State', 'e.g. Chennai, Tamil Nadu'),
-      ('collegeName', 'College Name', 'Search your college'),
-      ('collegeType', 'College Type', 'e.g. Engineering, Management'),
-      ('contactPersonName', 'Contact Person', 'e.g. Dr. Ramesh Kumar'),
-      ('designation', 'Designation', 'e.g. Dean, Training & Placement Officer'),
-      ('numberOfStudents', 'Number of Students', 'e.g. 5000'),
-      ('interestedIn', 'Interested In', 'e.g. Startup Programs, Incubation'),
-    ],
-    'startup_enthusiast': [
-      ('interestArea', 'Interest Areas', 'e.g. AI, Fintech, Gaming'),
-      ('lookingFor', 'Looking For', 'e.g. Networking, Learning, Co-founder'),
-    ],
-  };
-
-  static String _roleSectionLabel(String role) => switch (role) {
-    'student' => 'Student Details',
-    'founder' => 'Startup Details',
-    'mentor' => 'Mentor Details',
-    'investor' => 'Investor Details',
-    'college' => 'College Details',
-    'startup_enthusiast' => 'Your Interests',
-    _ => 'Profile Details',
-  };
+  // Role field definitions live in core/config/profile_role_fields.dart so the
+  // fill/edit forms, profile display, and completion all share one source.
 
   @override
   void initState() {
@@ -392,10 +326,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final resolved = user;
 
     // Build role-detail controllers before setState so they're ready for build
-    final fields = _roleFields[resolved.role] ?? [];
-    for (final (key, _, _) in fields) {
-      _roleDetailControllers[key] = TextEditingController(
-        text: resolved.roleDetails[key]?.toString() ?? '',
+    for (final field in roleFieldsFor(resolved.role)) {
+      _roleDetailControllers[field.key] = TextEditingController(
+        text: resolved.roleDetails[field.key]?.toString() ?? '',
       );
     }
 
@@ -582,11 +515,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Widget _buildRoleSection(bool isDark) {
     final role = _currentUser!.role;
-    final fields = _roleFields[role] ?? [];
+    final fields = roleFieldsFor(role);
     if (fields.isEmpty) return const SizedBox.shrink();
 
     return _FormSection(
-      label: _roleSectionLabel(role),
+      label: roleSectionLabel(role),
       isDark: isDark,
       children: [
         for (var i = 0; i < fields.length; i++) ...[
@@ -597,12 +530,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  Widget _buildRoleField((String, String, String) field) {
-    final (key, label, hint) = field;
+  Widget _buildRoleField(RoleField field) {
+    final key = field.key;
     final controller =
         _roleDetailControllers[key] ?? TextEditingController();
     // Student and college roles pick a college from the state-filtered
-    // Firestore dataset. Each role's state lives under a different key.
+    // dataset. Each role's state lives under a different key.
     final role = _currentUser?.role;
     if (key == 'collegeName' && (role == 'student' || role == 'college')) {
       final stateKey = role == 'college' ? 'cityState' : 'state';
@@ -610,22 +543,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         controller: controller,
         stateController:
             _roleDetailControllers[stateKey] ?? TextEditingController(),
-        label: label,
+        label: field.label,
       );
     }
     final dropdown = profileDropdownFor(key);
     if (dropdown != null) {
       return AppDropdownField(
         controller: controller,
-        label: label,
+        label: field.label,
         options: dropdown.options,
         allowOther: dropdown.allowOther,
       );
     }
     return AppTextField(
       controller: controller,
-      label: label,
-      hintText: hint,
+      label: field.label,
+      hintText: field.hint,
     );
   }
 

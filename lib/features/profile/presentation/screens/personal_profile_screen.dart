@@ -2,6 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/config/profile_completion.dart';
+import '../../../../core/config/profile_role_fields.dart';
 import '../../../../core/models/news_article_model.dart';
 import '../../../../core/models/user_model.dart';
 import '../../../../core/providers/firebase_providers.dart';
@@ -123,6 +125,14 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
                   onEditProfile: _openEditProfile,
                 ),
               ),
+              if (user.uid.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _ProfileCompletionCard(
+                    user: user,
+                    isDark: isDark,
+                    onComplete: _openEditProfile,
+                  ),
+                ),
               SliverToBoxAdapter(child: _ProBanner(isDark: isDark)),
               SliverPersistentHeader(
                 pinned: true,
@@ -893,6 +903,130 @@ class _InterestChip extends StatelessWidget {
   }
 }
 
+// ── Profile completion ────────────────────────────────────────────────────────
+
+class _ProfileCompletionCard extends StatelessWidget {
+  final UserModel user;
+  final bool isDark;
+  final VoidCallback onComplete;
+
+  const _ProfileCompletionCard({
+    required this.user,
+    required this.isDark,
+    required this.onComplete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final completion = computeProfileCompletion(user);
+    final fraction = completion.fraction.clamp(0.0, 1.0);
+    final isComplete = completion.isComplete;
+
+    final surface = isDark ? AppColors.darkSurface : AppColors.grayscaleWhite;
+    final border = isDark ? AppColors.darkBorder : AppColors.grayscaleLine;
+    final track = isDark
+        ? AppColors.darkBackground
+        : AppColors.grayscaleSecondaryButton;
+    final titleColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.grayscaleTitleActive;
+    final subColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.grayscaleBodyText;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isComplete
+                    ? Icons.verified_rounded
+                    : Icons.account_circle_outlined,
+                size: 18,
+                color: AppColors.primaryDefault,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isComplete ? 'Profile complete' : 'Complete your profile',
+                  style: AppTypography.textSmall.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: titleColor,
+                  ),
+                ),
+              ),
+              Text(
+                '${completion.percent}%',
+                style: AppTypography.textSmall.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primaryDefault,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: fraction,
+              minHeight: 8,
+              backgroundColor: track,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.primaryDefault,
+              ),
+            ),
+          ),
+          if (!isComplete) ...[
+            const SizedBox(height: 12),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onComplete,
+              child: Row(
+                children: [
+                  Text(
+                    'Finish setting up',
+                    style: AppTypography.textSmall.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryDefault,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 15,
+                    color: AppColors.primaryDefault,
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 8),
+            Text(
+              "Nice — you've filled out everything.",
+              style: AppTypography.textSmall.copyWith(
+                fontSize: 12,
+                color: subColor,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _ProBanner extends StatelessWidget {
   final bool isDark;
 
@@ -1086,62 +1220,11 @@ class _OverviewSliver extends StatelessWidget {
 
   const _OverviewSliver({required this.user, required this.isDark});
 
-  static const _roleDetailLabels = <String, Map<String, String>>{
-    'student': {
-      'collegeName': 'College',
-      'degreeCourse': 'Degree',
-      'year': 'Year',
-      'branch': 'Branch',
-      'skills': 'Skills',
-      'lookingFor': 'Looking For',
-    },
-    'founder': {
-      'startupName': 'Startup',
-      'startupStage': 'Stage',
-      'industry': 'Industry',
-      'startupDescription': 'About',
-      'startupLocation': 'Location',
-      'teamSize': 'Team Size',
-      'businessNeeds': 'Looking For',
-    },
-    'mentor': {
-      'profession': 'Designation',
-      'company': 'Company',
-      'expertise': 'Expertise',
-      'yearsExperience': 'Experience',
-      'industry': 'Industry',
-      'mentorshipArea': 'Mentors In',
-      'availability': 'Availability',
-    },
-    'investor': {
-      'investorType': 'Type',
-      'firmName': 'Firm',
-      'investmentRange': 'Ticket Size',
-      'preferredIndustries': 'Industries',
-      'preferredStage': 'Stage',
-      'portfolioCompanies': 'Portfolio',
-    },
-    'college': {
-      'collegeName': 'College',
-      'collegeType': 'Type',
-      'cityState': 'Location',
-      'contactPersonName': 'Contact',
-      'designation': 'Designation',
-      'numberOfStudents': 'Students',
-      'interestedIn': 'Interested In',
-    },
-    'startup_enthusiast': {
-      'interestArea': 'Interests',
-      'lookingFor': 'Looking For',
-    },
-  };
-
   @override
   Widget build(BuildContext context) {
-    final labelMap = _roleDetailLabels[user.role] ?? {};
-    final roleRows = labelMap.entries
+    final roleRows = roleFieldsFor(user.role)
         .where(
-          (e) => user.roleDetails[e.key]?.toString().trim().isNotEmpty == true,
+          (f) => user.roleDetails[f.key]?.toString().trim().isNotEmpty == true,
         )
         .toList();
 
@@ -1183,7 +1266,7 @@ class _OverviewSliver extends StatelessWidget {
                             : AppColors.grayscaleLine,
                       ),
                     _DetailRow(
-                      label: roleRows[i].value,
+                      label: roleRows[i].displayLabel,
                       value: user.roleDetails[roleRows[i].key]!
                           .toString()
                           .trim(),
