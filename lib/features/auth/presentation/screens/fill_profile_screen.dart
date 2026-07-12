@@ -35,6 +35,18 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isSubmitting = false;
 
+  // Sections the user chose to skip (fill later from their profile). Skipped
+  // sections collapse in the UI and are excluded from the saved profile.
+  final Set<String> _skippedSections = {};
+
+  bool _isSkipped(String key) => _skippedSections.contains(key);
+
+  void _toggleSkip(String key) {
+    setState(() {
+      if (!_skippedSections.remove(key)) _skippedSections.add(key);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -42,9 +54,13 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
     final email = user?.email ?? '';
     _emailController.text = email;
     _fullNameController.text = user?.displayName ?? '';
-    _usernameController.text = email.contains('@')
-        ? email.split('@').first
-        : '';
+    // Default the (required) username to the email's local part, sanitized to
+    // the allowed username characters. The user can tap and change it.
+    final localPart = email.contains('@') ? email.split('@').first : '';
+    _usernameController.text = localPart.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9_]'),
+      '',
+    );
   }
 
   @override
@@ -110,8 +126,19 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
       final setup = args is Map ? args : const <String, Object?>{};
       final role = setup['role'] as String? ?? '';
       final interests = List<String>.from(setup['interests'] as List? ?? []);
-      final username = _usernameController.text.trim();
       final firestoreRepo = ref.read(firestoreRepositoryProvider);
+
+      // Username is required and unique; other sections are optional and
+      // skipped ones are excluded from the save (completed later in profile).
+      final username = _usernameController.text.trim();
+      final fullName = _fullNameController.text.trim();
+      final phone = _isSkipped('contact') ? '' : _phoneController.text.trim();
+      final website = _isSkipped('about') ? '' : _websiteController.text.trim();
+      final bio = _isSkipped('about') ? '' : _bioController.text.trim();
+      final roleDetails = _isSkipped('role')
+          ? <String, dynamic>{}
+          : _collectRoleDetails(role);
+
       final available = await firestoreRepo.isUsernameAvailable(
         username,
         currentUser.uid,
@@ -133,21 +160,21 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
       final updatedUser = UserModel(
         uid: currentUser.uid,
         username: username,
-        fullName: _fullNameController.text.trim(),
+        fullName: fullName,
         email: currentUser.email ?? _emailController.text.trim(),
-        phone: _phoneController.text.trim(),
-        displayName: _fullNameController.text.trim(),
-        bio: _bioController.text.trim().isEmpty
-            ? 'Building the future of Indian startups.'
-            : _bioController.text.trim(),
+        phone: phone,
+        displayName: fullName.isNotEmpty
+            ? fullName
+            : (currentUser.displayName ?? ''),
+        bio: bio,
         avatarUrl: avatarUrl,
-        websiteUrl: _websiteController.text.trim(),
+        websiteUrl: website,
         followersCount: 0,
         followingCount: 0,
         newsCount: 0,
         role: role,
         interests: interests,
-        roleDetails: _collectRoleDetails(role),
+        roleDetails: roleDetails,
         onboardingCompleted: true,
       );
 
@@ -208,6 +235,8 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                           const SizedBox(height: 20),
                           _buildAvatarPicker(isDark),
                           const SizedBox(height: 28),
+                          // Identity is not skippable — a unique username is
+                          // required. Full name stays optional.
                           _FormSection(
                             label: 'Identity',
                             isDark: isDark,
@@ -216,17 +245,11 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                                 controller: _fullNameController,
                                 label: 'Full Name',
                                 hintText: 'Your full name',
-                                validator: (val) {
-                                  if (val == null || val.trim().isEmpty) {
-                                    return 'Full name is required';
-                                  }
-                                  return null;
-                                },
                               ),
                               const SizedBox(height: 14),
                               AppTextField(
                                 controller: _usernameController,
-                                label: 'Username',
+                                label: 'Username*',
                                 hintText: 'yourhandle',
                                 validator: (val) {
                                   final text = val?.trim() ?? '';
@@ -247,6 +270,9 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                           _FormSection(
                             label: 'Contact',
                             isDark: isDark,
+                            skippable: true,
+                            isSkipped: _isSkipped('contact'),
+                            onToggleSkip: () => _toggleSkip('contact'),
                             children: [
                               AppTextField(
                                 controller: _emailController,
@@ -261,7 +287,7 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                               const SizedBox(height: 14),
                               AppTextField(
                                 controller: _phoneController,
-                                label: 'Phone Number*',
+                                label: 'Phone Number',
                                 hintText: '+91 98765 43210',
                                 keyboardType: TextInputType.phone,
                                 inputFormatters: [
@@ -269,7 +295,10 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                                     RegExp(r'[0-9+\-\s()]'),
                                   ),
                                 ],
-                                validator: validatePhoneNumber,
+                                validator: (val) =>
+                                    (val == null || val.trim().isEmpty)
+                                    ? null
+                                    : validatePhoneNumber(val),
                               ),
                             ],
                           ),
@@ -278,11 +307,16 @@ class _FillProfileScreenState extends ConsumerState<FillProfileScreen> {
                             role: role,
                             isDark: isDark,
                             controllerFor: _roleController,
+                            isSkipped: _isSkipped('role'),
+                            onToggleSkip: () => _toggleSkip('role'),
                           ),
                           const SizedBox(height: 20),
                           _FormSection(
                             label: 'About',
                             isDark: isDark,
+                            skippable: true,
+                            isSkipped: _isSkipped('about'),
+                            onToggleSkip: () => _toggleSkip('about'),
                             children: [
                               _MultilineField(
                                 controller: _bioController,
@@ -654,11 +688,15 @@ class _RoleDetailsSection extends StatelessWidget {
   final String role;
   final bool isDark;
   final TextEditingController Function(String key) controllerFor;
+  final bool isSkipped;
+  final VoidCallback onToggleSkip;
 
   const _RoleDetailsSection({
     required this.role,
     required this.isDark,
     required this.controllerFor,
+    required this.isSkipped,
+    required this.onToggleSkip,
   });
 
   @override
@@ -671,6 +709,9 @@ class _RoleDetailsSection extends StatelessWidget {
           ? 'Role Details'
           : '${role.replaceAll('_', ' ')} Details',
       isDark: isDark,
+      skippable: true,
+      isSkipped: isSkipped,
+      onToggleSkip: onToggleSkip,
       children: [
         for (var i = 0; i < fields.length; i++) ...[
           _buildField(fields[i], controllerFor(fields[i].key)),
@@ -715,11 +756,17 @@ class _FormSection extends StatelessWidget {
   final String label;
   final bool isDark;
   final List<Widget> children;
+  final bool skippable;
+  final bool isSkipped;
+  final VoidCallback? onToggleSkip;
 
   const _FormSection({
     required this.label,
     required this.isDark,
     required this.children,
+    this.skippable = false,
+    this.isSkipped = false,
+    this.onToggleSkip,
   });
 
   @override
@@ -729,16 +776,28 @@ class _FormSection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 10),
-          child: Text(
-            label.toUpperCase(),
-            style: AppTypography.textSmall.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.grayscaleBodyText,
-            ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  style: AppTypography.textSmall.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.8,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.grayscaleBodyText,
+                  ),
+                ),
+              ),
+              if (skippable && onToggleSkip != null)
+                _SkipToggle(
+                  isDark: isDark,
+                  isSkipped: isSkipped,
+                  onTap: onToggleSkip!,
+                ),
+            ],
           ),
         ),
         Container(
@@ -750,9 +809,82 @@ class _FormSection extends StatelessWidget {
               color: isDark ? AppColors.darkBorder : AppColors.grayscaleLine,
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
+          child: isSkipped
+              ? _SkippedNote(isDark: isDark)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: children,
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SkipToggle extends StatelessWidget {
+  final bool isDark;
+  final bool isSkipped;
+  final VoidCallback onTap;
+
+  const _SkipToggle({
+    required this.isDark,
+    required this.isSkipped,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isSkipped
+        ? AppColors.primaryDefault
+        : (isDark ? AppColors.darkTextSecondary : AppColors.grayscaleBodyText);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSkipped ? Icons.add_rounded : Icons.arrow_forward_rounded,
+              size: 13,
+              color: color,
+            ),
+            const SizedBox(width: 3),
+            Text(
+              isSkipped ? 'ADD' : 'SKIP',
+              style: AppTypography.textSmall.copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SkippedNote extends StatelessWidget {
+  final bool isDark;
+
+  const _SkippedNote({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.grayscaleBodyText;
+    return Row(
+      children: [
+        Icon(Icons.schedule_rounded, size: 16, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Skipped — you can add this later from your profile.',
+            style: AppTypography.textSmall.copyWith(fontSize: 13, color: color),
           ),
         ),
       ],

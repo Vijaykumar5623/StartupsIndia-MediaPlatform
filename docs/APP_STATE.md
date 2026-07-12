@@ -62,6 +62,30 @@ Fill Profile collects shared fields:
 - bio
 - website
 
+**Username is the only required field; everything else is optional.** The goal
+is to get users into the app fast and let them complete details later from Edit
+Profile. Specifics:
+
+- **Username is required and unique.** It is pre-filled with the email's local
+  part (before `@`), sanitized to the allowed characters (`a-z0-9_`, lowercased);
+  the user can tap and change it. Validation enforces the `^[a-zA-Z0-9_]{3,24}$`
+  pattern, and `isUsernameAvailable` (query on `usernameLower`) blocks duplicates
+  on submit. The Identity section is therefore **not** skippable.
+- All other fields are optional — no presence validators; format checks (e.g.
+  phone) only run when the field is actually filled. `fullName` falls back to the
+  Google/Auth `displayName` when left blank.
+- The Contact, role-details, and About sections each have a per-section
+  **Skip / Add** toggle that collapses them. A skipped section is excluded from
+  the saved profile (its typed values, if any, are not written).
+- `onboardingCompleted` is set to `true` on completion regardless of how much was
+  filled, so the user is not sent back through onboarding.
+
+No Firestore rules change was needed: user profile writes are owner-gated with no
+field-level required constraints. Note: username uniqueness is an app-level check
+(`usernameLower`), not a DB constraint, so it can still race under concurrent
+sign-ups — see `docs/known-issues.md` (a `usernames/{usernameLower}` reservation
+doc would make it atomic).
+
 It also collects role-specific fields and stores them as
 `users/{uid}.roleDetails`. The field sets were implemented from a private client
 requirements file and should be treated as client-approved behavior, not copied
