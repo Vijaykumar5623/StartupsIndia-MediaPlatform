@@ -59,15 +59,6 @@ service cloud.firestore {
       }
     }
 
-    // ── Colleges ──────────────────────────────────────────────────────────────
-    // Read-only reference data (AISHE dataset) used by the student college
-    // picker. Public read so it works during onboarding (before/without auth).
-    // Only admin/seed tooling (service account) can write.
-    match /colleges/{collegeId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
     // ── Users ─────────────────────────────────────────────────────────────────
     // Authenticated users can read profiles.
     // User can edit own profile. Admin can manage all profiles.

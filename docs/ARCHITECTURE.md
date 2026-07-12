@@ -108,7 +108,7 @@ Feature repositories:
 - `PostRepository` handles media posts, post likes/bookmarks/shares, post comments, article comments.
 - `FirebaseNotificationRepositoryImpl` handles per-user notifications and FCM token persistence.
 - `LeaderboardRepository` and `ReportRepository` support home/profile-related surfaces.
-- `CollegeRepository` provides read-only, state-filtered prefix search over the `colleges` reference collection (AISHE dataset seeded via `scripts/seed_colleges.py`), used by the student college picker.
+- `CollegeRepository` loads a bundled asset (`assets/data/colleges_in.json`, built from the AISHE dataset via `scripts/build_colleges_asset.py`) and does in-memory, state-filtered substring search for the student/college college picker. No Firestore involved — fully offline.
 
 The codebase is not strict-clean architecture. Some UI code directly imports
 Firebase or feature repositories where pragmatic.

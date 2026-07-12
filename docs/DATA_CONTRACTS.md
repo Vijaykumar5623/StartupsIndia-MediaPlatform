@@ -84,33 +84,29 @@ Dropdown + "Other" free-text option:
 Special field:
 
 - `collegeName` (student & college roles) — entered through a state-filtered
-  searchable picker backed by the `colleges` collection (see below), with an
-  "Other" free-text fallback. The state filter uses the role's own state field:
-  `state` for students, `cityState` for the college role.
+  searchable picker backed by a **bundled app asset**
+  (`assets/data/colleges_in.json`, built from the AISHE dataset), not Firestore,
+  with an "Other" free-text fallback. The state filter uses the role's own state
+  field: `state` for students, `cityState` for the college role.
 
 Fields saved before a key became a dropdown (or values entered via "Other")
 are preserved as-is and shown as custom entries. Note: `teamSize`,
 `yearsExperience`, and `numberOfStudents` now store range labels (e.g. `2–5`)
 rather than raw numbers.
 
-## colleges/{collegeId}
+## College list (bundled asset, not Firestore)
 
-Read-only reference data seeded from the government AISHE dataset
-(`scripts/seed_colleges.py`). Powers the student college picker, which queries
-by state with a prefix search on `nameLower`.
+The college picker reads a bundled asset rather than a Firestore collection, so
+it needs no reads/writes and works offline.
 
-Fields:
-
-- `name`: string — display name
-- `nameLower`: string — lowercased name, used for ordering + prefix search
-- `state`: string — canonical Indian state/UT label (matches the app's state
-  dropdown, so the picker's `where(state ==)` filter works)
-- `city`: string — city/town (display only), may be empty
-
-Access: public read (works during onboarding, before auth); writes are
-admin/seed-tooling only. Requires the composite index (`state` ASC, `nameLower`
-ASC) declared in `firestore.indexes.json`. Doc ids are a hash of `name+state`,
-so re-seeding is idempotent.
+- Asset: `assets/data/colleges_in.json`
+- Shape: `{ "<Canonical State>": ["College name", ...], ... }` — names are
+  de-duplicated and alphabetically sorted; state keys use the app's canonical
+  labels so the picker's state filter matches.
+- Built by `scripts/build_colleges_asset.py` from the government AISHE dataset
+  (~43k colleges; Government Open Data License – India, attribution required).
+- Loaded/searched by `CollegeRepository` (in-memory substring search). To
+  refresh the list, re-run the builder and ship an app update.
 
 ## users/{uid}/communities/{communityId}
 

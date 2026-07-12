@@ -1,69 +1,89 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/firebase_providers.dart';
 import '../utils/app_error_reporter.dart';
 
-/// Upper-bound sentinel for Firestore prefix queries: a very high Private-Use
-/// code point so that `[query, query + sentinel)` captures every string that
-/// starts with `query`.
-const String _prefixSentinel = '\u{f8ff}';
-
-/// Read-only access to the `colleges` reference collection (seeded from the
-/// AISHE dataset — see `scripts/seed_colleges.py`).
+/// Read-only access to the bundled college list (asset built from the AISHE
+/// dataset — see `scripts/build_colleges_asset.py`).
 ///
-/// Search is a case-insensitive **prefix** match on `nameLower`, optionally
-/// scoped to a [state]. Prefix (not substring) search is a Firestore
-/// constraint; it is the standard, index-friendly approach for autocomplete.
+/// The data ships inside the app as a JSON asset grouped by state, so search is
+/// fully offline with no Firestore reads/writes. Because it runs in memory it
+/// can do a **substring** (contains) match rather than the prefix-only match a
+/// Firestore query would allow. The asset is parsed once on first use and
+/// cached for the app's lifetime.
 class CollegeRepository {
-  CollegeRepository(this._firestore);
+  CollegeRepository({this.assetPath = 'assets/data/colleges_in.json'});
 
-  final FirebaseFirestore _firestore;
+  final String assetPath;
 
-  CollectionReference<Map<String, dynamic>> get _colleges =>
-      _firestore.collection('colleges');
+  /// Canonical state label → alphabetically sorted college names.
+  Map<String, List<String>>? _byState;
+  Future<void>? _loading;
 
-  /// Returns up to [limit] college names whose lowercase name starts with
-  /// [query], within [state] when it is non-empty. Ordered alphabetically.
+  Future<void> _ensureLoaded() => _loading ??= _load();
+
+  Future<void> _load() async {
+    try {
+      final raw = await rootBundle.loadString(assetPath);
+      final decoded = await compute(_decodeColleges, raw);
+      _byState = decoded;
+    } catch (error, stackTrace) {
+      AppErrorReporter.record(
+        error,
+        stackTrace,
+        reason: 'Failed to load colleges asset ($assetPath)',
+      );
+      _byState = const {};
+    }
+  }
+
+  /// Returns up to [limit] college names containing [query] (case-insensitive),
+  /// within [state] when it is non-empty; otherwise across all states. Results
+  /// keep the asset's alphabetical order.
   ///
-  /// Requires the composite index (state ASC, nameLower ASC) declared in
-  /// `firestore.indexes.json`. Returns an empty list on error so the picker can
-  /// fall back to the "Other" free-text entry.
+  /// Returns an empty list on any failure so the picker can fall back to the
+  /// "Other" free-text entry.
   Future<List<String>> searchColleges({
     required String state,
     required String query,
     int limit = 30,
   }) async {
+    await _ensureLoaded();
+    final byState = _byState;
+    if (byState == null || byState.isEmpty) return const [];
+
     final trimmedState = state.trim();
     final q = query.trim().toLowerCase();
 
-    try {
-      Query<Map<String, dynamic>> ref = _colleges;
-      if (trimmedState.isNotEmpty) {
-        ref = ref.where('state', isEqualTo: trimmedState);
-      }
-      ref = ref.orderBy('nameLower');
-      if (q.isNotEmpty) {
-        ref = ref.startAt([q]).endAt(['$q$_prefixSentinel']);
-      }
-      ref = ref.limit(limit);
+    final Iterable<String> pool = trimmedState.isNotEmpty
+        ? (byState[trimmedState] ?? const [])
+        : byState.values.expand((names) => names);
 
-      final snapshot = await ref.get();
-      return snapshot.docs
-          .map((doc) => (doc.data()['name'] ?? '').toString())
-          .where((name) => name.isNotEmpty)
-          .toList();
-    } catch (error, stackTrace) {
-      AppErrorReporter.record(
-        error,
-        stackTrace,
-        reason: 'College search failed (state="$state", query="$query")',
-      );
-      return const [];
+    final results = <String>[];
+    for (final name in pool) {
+      if (q.isEmpty || name.toLowerCase().contains(q)) {
+        results.add(name);
+        if (results.length >= limit) break;
+      }
     }
+    return results;
   }
 }
 
+/// Runs off the UI isolate via [compute]: decodes the grouped-by-state JSON.
+Map<String, List<String>> _decodeColleges(String raw) {
+  final decoded = jsonDecode(raw) as Map<String, dynamic>;
+  return decoded.map(
+    (state, names) => MapEntry(
+      state,
+      (names as List).map((name) => name.toString()).toList(growable: false),
+    ),
+  );
+}
+
 final collegeRepositoryProvider = Provider<CollegeRepository>((ref) {
-  return CollegeRepository(ref.watch(firebaseFirestoreProvider));
+  return CollegeRepository();
 });

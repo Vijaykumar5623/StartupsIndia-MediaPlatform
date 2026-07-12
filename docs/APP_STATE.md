@@ -75,11 +75,12 @@ to that config turns the field into a dropdown in both places automatically.
 
 The student role also has a `state` dropdown (Indian states/UTs) that drives a
 state-filtered **college picker**: `collegeName` opens a searchable sheet backed
-by the Firestore `colleges` collection (seeded from the AISHE dataset via
-`scripts/seed_colleges.py`) and filtered by the chosen state, with an "Other"
-free-text fallback for colleges not in the dataset. The college institution role
-uses the same picker for its own `collegeName`, filtered by its `cityState`
-field (both roles show the state field above College Name). See
+by a bundled app asset (`assets/data/colleges_in.json`, ~43k colleges built from
+the AISHE dataset via `scripts/build_colleges_asset.py`), filtered by the chosen
+state, with an "Other" free-text fallback for colleges not in the dataset. The
+search runs fully offline in memory (substring match, no Firestore). The college
+institution role uses the same picker for its own `collegeName`, filtered by its
+`cityState` field (both roles show the state field above College Name). See
 `CollegeSearchField` + `CollegeRepository`.
 
 Fixed dropdowns (no free text): student `year`; founder `startupStage`,
