@@ -140,6 +140,17 @@ system. The app relies on:
 
 Build menu launches external URLs with `LaunchMode.externalApplication`.
 
+## Outbound Links And App Return Deep Link
+
+All external links should be opened via `launchExternalUrl` in
+`core/utils/app_urls.dart`. For first-party (`startupsindia.in`) URLs it appends
+`?ref=app` so the website can detect app-referred visitors and show a "Back to
+app" overlay. That overlay's button reopens the app via the custom scheme
+`startupsindia://open`, registered in `AndroidManifest.xml` (VIEW/BROWSABLE
+intent filter) and `ios/Runner/Info.plist` (`CFBundleURLTypes`). The web-side
+spec is in `docs/web-back-to-app-overlay.md`. Constants: `kAppRefKey`/
+`kAppRefValue`/`kAppReturnLink` in `app_urls.dart`.
+
 ## Firebase And Security Boundary
 
 The mobile app is not trusted for admin-only writes. Admin rights are currently

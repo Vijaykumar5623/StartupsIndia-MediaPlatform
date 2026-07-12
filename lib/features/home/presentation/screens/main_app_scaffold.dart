@@ -2,9 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/models/news_article_model.dart';
+import '../../../../core/utils/app_urls.dart';
 import '../../../../theme/style_guide.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../community/presentation/screens/community_screen.dart';
@@ -199,8 +199,7 @@ class _MainAppScaffoldState extends ConsumerState<MainAppScaffold> {
   }
 
   Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    await launchExternalUrl(Uri.parse(url));
     if (mounted) setState(() => _showBuildMenu = false);
   }
 

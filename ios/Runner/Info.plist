@@ -45,5 +45,18 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Deep link so the website's "Back to app" overlay can reopen the app
+	     via startupsindia://open -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>in.startupsindia.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>startupsindia</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

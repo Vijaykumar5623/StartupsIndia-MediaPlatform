@@ -144,6 +144,9 @@ Profile photo storage:
 - Explore tab: media feed.
 - Build action: opens a bottom bubble of external Startup India links,
   including Services, which opens `https://www.startupsindia.in/contact`.
+  First-party links are opened via `launchExternalUrl`, which appends `?ref=app`
+  so the website can show a "Back to app" overlay (returns via the
+  `startupsindia://open` scheme). See `docs/web-back-to-app-overlay.md`.
 - Community tab: communities overview.
 - Profile tab: personal profile.
 
