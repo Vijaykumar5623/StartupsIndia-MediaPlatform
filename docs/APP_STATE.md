@@ -282,9 +282,32 @@ URL stored in `users/{uid}.avatarUrl`.
 
 ## Notifications
 
-Firebase Messaging is initialized in `main.dart`.
+Firebase Messaging is initialized in `main.dart`. System-tray notifications go
+through the shared `LocalNotificationService` (`core/services`), used by both
+the FCM foreground handler and in-app triggers.
 
 - Foreground messages show a snackbar and local notification.
 - Tapping a notification with `data.page == "notifications"` routes to `/notifications`.
 - FCM tokens are saved to `users/{uid}.fcmTokens` through the notifications repository.
 - App notifications are stored under `users/{uid}/notifications`.
+
+**Welcome on signup.** When a new user is created (email/password, or a new
+Google account), `WelcomeNotifications.sendFor` writes two notifications —
+"Welcome to StartupsIndia 🎉" and "Complete your profile" — to
+`users/{uid}/notifications` and shows them as local (system-tray)
+notifications. It's fire-and-forget and best-effort, so it never blocks
+onboarding. (A real server-sent push would need a Cloud Function; this is the
+client-side equivalent, which the product owner accepted since it still lands in
+the in-app list.)
+
+**In-app notifications screen.**
+
+- Each notification tile has an **X** to delete just that one
+  (`deleteNotification`), and a **Clear all** button at the bottom
+  (`deleteAllNotifications`, behind a confirm dialog).
+- The home navbar bell shows its red dot **only when the user has at least one
+  notification** (`userNotificationsProvider` non-empty); it disappears once the
+  list is cleared.
+- Repository (`NotificationRepository`) methods: `watchUserNotifications`,
+  `addNotification`, `markAsRead`, `markAllAsRead`, `deleteNotification`,
+  `deleteAllNotifications`, `saveFcmToken`.

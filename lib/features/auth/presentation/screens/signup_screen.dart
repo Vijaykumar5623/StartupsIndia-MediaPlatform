@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,8 @@ import '../../../../core/providers/theme_service_provider.dart';
 import '../../../../core/utils/app_urls.dart';
 import '../../../../theme/style_guide.dart';
 import '../../../../core/presentation/widgets/app_text_field.dart';
+import '../../../notifications/data/welcome_notifications.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../providers/auth_providers.dart';
 import 'auth_screen_widgets.dart';
 
@@ -64,6 +68,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
+  /// Fire-and-forget welcome + complete-profile notifications for a new user.
+  void _sendWelcomeNotifications() {
+    final uid = ref.read(authRepositoryProvider).currentUser?.uid;
+    if (uid == null) return;
+    unawaited(
+      WelcomeNotifications.sendFor(
+        uid,
+        ref.read(notificationRepositoryProvider),
+      ),
+    );
+  }
+
   void _submit() async {
     if (!_agreedToTerms) {
       _showError('Please agree to the Terms & Conditions to continue.');
@@ -77,6 +93,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        _sendWelcomeNotifications();
         if (!mounted) return;
         Navigator.pushNamedAndRemoveUntil(
           context,
@@ -102,6 +119,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (!mounted) return;
       final isNewUser = credential.additionalUserInfo?.isNewUser ?? false;
       if (isNewUser) {
+        _sendWelcomeNotifications();
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/interest-selection',

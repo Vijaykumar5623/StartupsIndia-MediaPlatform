@@ -22,6 +22,14 @@ class FirebaseNotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
+  Future<void> addNotification(
+    String userId,
+    AppNotification notification,
+  ) async {
+    await _userNotifications(userId).add(notification.toFirestore());
+  }
+
+  @override
   Future<void> markAsRead(String userId, String notificationId) async {
     await _userNotifications(userId).doc(notificationId).update({'isRead': true});
   }
@@ -43,6 +51,17 @@ class FirebaseNotificationRepositoryImpl implements NotificationRepository {
   @override
   Future<void> deleteNotification(String userId, String notificationId) async {
     await _userNotifications(userId).doc(notificationId).delete();
+  }
+
+  @override
+  Future<void> deleteAllNotifications(String userId) async {
+    final snapshot = await _userNotifications(userId).get();
+    if (snapshot.docs.isEmpty) return;
+    final batch = _firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
   }
 
   @override

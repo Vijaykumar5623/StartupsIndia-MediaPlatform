@@ -4,6 +4,10 @@ abstract class NotificationRepository {
   /// Stream of notifications for a specific user, ordered by newest first.
   Stream<List<AppNotification>> watchUserNotifications(String userId);
 
+  /// Add a notification to a user's list (id on [notification] is ignored;
+  /// Firestore assigns one).
+  Future<void> addNotification(String userId, AppNotification notification);
+
   /// Mark a specific notification as read.
   Future<void> markAsRead(String userId, String notificationId);
 
@@ -12,6 +16,9 @@ abstract class NotificationRepository {
 
   /// Delete a specific notification.
   Future<void> deleteNotification(String userId, String notificationId);
+
+  /// Delete every notification for a user.
+  Future<void> deleteAllNotifications(String userId);
 
   /// Save FCM token to the user's document for targeted push notifications.
   Future<void> saveFcmToken(String userId, String token);

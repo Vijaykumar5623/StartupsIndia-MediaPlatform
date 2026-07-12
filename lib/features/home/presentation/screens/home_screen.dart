@@ -10,6 +10,7 @@ import '../../../../core/models/news_article_model.dart';
 import '../../../../core/utils/app_urls.dart';
 import '../../../../core/widgets/guest_gate.dart';
 import '../../../../theme/style_guide.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../domain/models/home_mock_data.dart';
 import '../providers/news_provider.dart';
 import 'section_list_screen.dart';
@@ -189,7 +190,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ? Navigator.pushNamed(context, '/signup')
                     : Navigator.pushNamed(context, '/notifications'),
               ),
-              if (!isGuest)
+              // Red dot only when the user actually has notifications.
+              if (!isGuest &&
+                  (ref
+                          .watch(userNotificationsProvider)
+                          .value
+                          ?.isNotEmpty ??
+                      false))
                 Positioned(
                   top: 4,
                   right: 4,

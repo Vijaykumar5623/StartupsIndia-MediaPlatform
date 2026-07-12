@@ -11,6 +11,7 @@ class NotificationTile extends StatelessWidget {
   final bool isDark;
   final bool isFollowing;
   final VoidCallback? onFollowTap;
+  final VoidCallback? onDelete;
 
   const NotificationTile({
     super.key,
@@ -22,6 +23,7 @@ class NotificationTile extends StatelessWidget {
     required this.isDark,
     this.isFollowing = false,
     this.onFollowTap,
+    this.onDelete,
   });
 
   @override
@@ -40,63 +42,90 @@ class NotificationTile extends StatelessWidget {
     final avatarText =
         isDark ? AppColors.darkTextPrimary : AppColors.grayscaleTitleActive;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      child: Stack(
         children: [
-          _buildAvatar(avatarBg, avatarText),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: borderColor),
+              boxShadow: isDark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+            ),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AppTypography.textSmall.copyWith(
-                    color: titleColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                _buildAvatar(avatarBg, avatarText),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        // Leave room for the delete X in the corner.
+                        padding: EdgeInsets.only(right: onDelete != null ? 20 : 0),
+                        child: Text(
+                          title,
+                          style: AppTypography.textSmall.copyWith(
+                            color: titleColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        style: AppTypography.textSmall.copyWith(
+                          color: subtitleColor,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        timeAgo,
+                        style: AppTypography.textSmall.copyWith(
+                          color: timeColor,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: AppTypography.textSmall.copyWith(
-                    color: subtitleColor,
-                    fontSize: 13,
+                if (type == NotificationType.follow)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: _buildFollowButton(),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  timeAgo,
-                  style: AppTypography.textSmall.copyWith(
-                    color: timeColor,
-                    fontSize: 11,
-                  ),
-                ),
               ],
             ),
           ),
-          if (type == NotificationType.follow)
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: _buildFollowButton(),
+          if (onDelete != null)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: GestureDetector(
+                onTap: onDelete,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 16,
+                    color: timeColor,
+                  ),
+                ),
+              ),
             ),
         ],
       ),

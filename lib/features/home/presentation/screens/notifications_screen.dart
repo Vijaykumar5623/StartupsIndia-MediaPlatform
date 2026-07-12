@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/style_guide.dart';
 import '../widgets/notification_tile.dart';
+import '../../../../core/providers/firebase_providers.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../notifications/domain/models/app_notification.dart';
 import '../../../../core/utils/time_format_helper.dart';
@@ -21,6 +22,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final notificationsAsync = ref.watch(userNotificationsProvider);
+    final uid = ref.watch(authStateChangesProvider).value?.uid;
 
     return Scaffold(
       backgroundColor:
@@ -31,15 +33,68 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             _buildHeader(context, isDark),
             Expanded(
               child: notificationsAsync.when(
-                data: (notifications) => _buildList(notifications, isDark),
-                loading: () => _buildList(const [], isDark),
-                error: (_, _) => _buildList(const [], isDark),
+                data: (notifications) => _buildList(notifications, isDark, uid),
+                loading: () => _buildList(const [], isDark, uid),
+                error: (_, _) => _buildList(const [], isDark, uid),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _deleteOne(String? uid, String id) {
+    if (uid == null) return;
+    ref.read(notificationRepositoryProvider).deleteNotification(uid, id);
+  }
+
+  Future<void> _clearAll(String? uid) async {
+    if (uid == null) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor:
+            isDark ? AppColors.darkSurface : AppColors.grayscaleWhite,
+        title: Text(
+          'Clear all notifications?',
+          style: AppTypography.textSmall.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color:
+                isDark ? AppColors.darkTextPrimary : AppColors.grayscaleTitleActive,
+          ),
+        ),
+        content: Text(
+          'This removes every notification and cannot be undone.',
+          style: AppTypography.textSmall.copyWith(
+            fontSize: 13,
+            color:
+                isDark ? AppColors.darkTextSecondary : AppColors.grayscaleBodyText,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Clear all',
+              style: TextStyle(
+                color: Color(0xFFEF4444),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(notificationRepositoryProvider).deleteAllNotifications(uid);
+    }
   }
 
   Widget _buildHeader(BuildContext context, bool isDark) {
@@ -85,7 +140,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
-  Widget _buildList(List<AppNotification> notifications, bool isDark) {
+  Widget _buildList(
+    List<AppNotification> notifications,
+    bool isDark,
+    String? uid,
+  ) {
     if (notifications.isEmpty) {
       return Center(
         child: Column(
@@ -147,18 +206,41 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       slivers: [
         if (today.isNotEmpty) ...[
           _buildGroupHeader('Today', isDark),
-          _buildGroupSliver(today, isDark),
+          _buildGroupSliver(today, isDark, uid),
         ],
         if (yesterday.isNotEmpty) ...[
           _buildGroupHeader('Yesterday', isDark),
-          _buildGroupSliver(yesterday, isDark),
+          _buildGroupSliver(yesterday, isDark, uid),
         ],
         if (older.isNotEmpty) ...[
           _buildGroupHeader('Earlier', isDark),
-          _buildGroupSliver(older, isDark),
+          _buildGroupSliver(older, isDark, uid),
         ],
+        SliverToBoxAdapter(child: _buildClearAll(isDark, uid)),
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
+    );
+  }
+
+  Widget _buildClearAll(bool isDark, String? uid) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: TextButton.icon(
+        onPressed: () => _clearAll(uid),
+        icon: const Icon(
+          Icons.delete_sweep_outlined,
+          size: 18,
+          color: Color(0xFFEF4444),
+        ),
+        label: Text(
+          'Clear all',
+          style: AppTypography.textSmall.copyWith(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFFEF4444),
+          ),
+        ),
+      ),
     );
   }
 
@@ -181,7 +263,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
-  SliverList _buildGroupSliver(List<AppNotification> items, bool isDark) {
+  SliverList _buildGroupSliver(
+    List<AppNotification> items,
+    bool isDark,
+    String? uid,
+  ) {
     return SliverList.builder(
       itemCount: items.length,
       itemBuilder: (context, index) {
@@ -194,6 +280,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           avatarLabel: item.avatarLabel,
           isDark: isDark,
           isFollowing: _followingIds.contains(item.id),
+          onDelete: () => _deleteOne(uid, item.id),
           onFollowTap: item.type == NotificationType.follow
               ? () {
                   setState(() {
